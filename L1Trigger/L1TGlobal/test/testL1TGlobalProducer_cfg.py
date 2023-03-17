@@ -119,9 +119,18 @@ process.simGtStage2Digis = cms.EDProducer('L1TGlobalProducer',
     semiRandomInitialPSCounters = cms.bool(opts.semiRandomInitialPSCounters),
     PrescaleSet = cms.uint32(opts.prescaleSet)
 )
+process.AXOL1TLProducer = cms.EDProducer(
+    "AXOL1TLProducer",
+    egInputTag = cms.InputTag('simCaloStage2Digis'),
+    muInputTag = cms.InputTag('simGmtStage2Digis'),
+    jetInputTag = cms.InputTag('simCaloStage2Digis'),
+    etsumInputTag = cms.InputTag('simCaloStage2Digis'),
+    AXOL1TLModelVersion = cms.string('./GTADModel_v1')
+)
+
 
 # Task definition
-process.l1tTask = cms.Task( process.simGtExtFakeStage2Digis, process.simGtStage2Digis )
+process.l1tTask = cms.Task( process.simGtExtFakeStage2Digis, process.simGtStage2Digis, process.AXOL1TLProducer )
 
 # Path definition
 process.l1tPath = cms.Path( process.l1tTask )
@@ -140,8 +149,14 @@ process.l1tGlobalSummary = cms.EDAnalyzer( 'L1TGlobalSummary',
     psColumn = cms.int32( 0 )
 )
 
+process.output = cms.OutputModule("PoolOutputModule",
+                                  outputCommands = cms.untracked.vstring('keep *_*_*_TEST'),
+                                  fileName = cms.untracked.string('poolout.root')
+)
+
 # EndPath definition
-process.l1tEndPath = cms.EndPath( process.l1tGlobalSummary )
+process.l1tEndPath = cms.EndPath( process.l1tGlobalSummary + process.output)
+
 
 # MessageLogger
 process.load('FWCore.MessageService.MessageLogger_cfi')
