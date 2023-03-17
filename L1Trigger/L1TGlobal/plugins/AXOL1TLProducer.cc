@@ -278,9 +278,9 @@ void AXOL1TLProducer::produce(Event& iEvent, const EventSetup& iSetup) {
     anomalyResult->push_back((result[i]).to_float());
   }
 
-  iEvent.put(std::move(anomalyInput));
-  iEvent.put(std::move(anomalyScore));
-  iEvent.put(std::move(anomalyResult));
+  iEvent.put(std::move(anomalyInput), "anomalyInput");
+  iEvent.put(std::move(anomalyScore), "anomalyScore");
+  iEvent.put(std::move(anomalyResult), "anomalyResult");
 }
 
 // ------------ method called once each job just before starting event loop ------------
