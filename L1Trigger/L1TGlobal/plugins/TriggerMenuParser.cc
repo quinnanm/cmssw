@@ -2540,6 +2540,96 @@ bool l1t::TriggerMenuParser::parseEnergySumCorr(const L1TUtmObject* corrESum, un
   return true;
 }
 
+/**                                                                                                                                                            
+ * parseEnergySumCorr Parse an "energy sum" correlation condition and insert an entry to the conditions map                                                    
+ *                                                                                                                                                             
+ * @param node The corresponding node.                                                                                                                        
+ * @param name The name of the condition.                                                                                                                      
+ * @param chipNr The number of the chip this condition is located.                                                                                             
+ *                                                                                                                                                             
+ * @return "true" if succeeded, "false" if an error occurred.                                                                                                  
+ *                                                                                                                                                             
+ */
+
+bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned int chipNr) {
+  using namespace tmeventsetup;
+
+  // get condition, particle name and particle type
+  std::string condition = "axol1tl";
+  std::string type = l1t2string(condAXOL1TL.getType());
+  std::string name = l1t2string(condAXOL1TL.getName());
+
+  LogDebug("TriggerMenuParser") << " ****************************************** " << std::endl
+                                << "     (in parseAXOL1TL) " << std::endl
+                                << " condition = " << condition << std::endl
+                                << " type      = " << type << std::endl
+                                << " name      = " << name << std::endl;
+
+  const int nrObj = 1;
+  GtConditionType cType = TypeAXOL1TL;
+
+  std::vector<AXOL1TLTemplate::ObjectParameter> objParameter(nrObj);
+
+  if (int(condAXOL1TL.getObjects().size()) != nrObj) {
+    edm::LogError("TriggerMenuParser") << " condAXOL1TL objects: nrObj = " << nrObj
+                                       << "condAXOL1TL.getObjects().size() = " << condAXOL1TL.getObjects().size()
+                                       << std::endl;
+    return false;
+  }
+
+  // Get the axol1tl object
+  L1TUtmObject object = condAXOL1TL.getObjects().at(0);
+  int relativeBx = object.getBxOffset();
+  bool gEq = (object.getComparisonOperator() == esComparisonOperator::GE);
+
+  //Loop over cuts for this  object
+  int lowerThresholdInd = 0;
+  int upperThresholdInd = -1;
+
+  const std::vector<L1TUtmCut>& cuts = object.getCuts();
+  for (size_t kk = 0; kk < cuts.size(); kk++) {
+    const L1TUtmCut& cut = cuts.at(kk);
+
+    switch (cut.getCutType()) {
+      case esCutType::AnomalyScore:
+        lowerThresholdInd = cut.getMinimum().value;
+        upperThresholdInd = cut.getMaximum().value;
+        break;
+      default:
+        break;
+    }  //end switch
+  }    //end cut loop
+
+  //fill object params
+  objParameter[0].minAXOL1TLThreshold = lowerThresholdInd;
+  objParameter[0].maxAXOL1TLThreshold = upperThresholdInd;
+
+  // create a new AXOL1TL  condition
+  AXOL1TLTemplate axol1tlCond(name);
+  axol1tlCond.setCondType(cType);
+  axol1tlCond.setCondGEq(gEq);
+  axol1tlCond.setCondChipNr(chipNr);
+  axol1tlCond.setCondRelativeBx(relativeBx);
+  axol1tlCond.setConditionParameter(objParameter);
+
+  if (edm::isDebugEnabled()) {
+    std::ostringstream myCoutStream;
+    axol1tlCond.print(myCoutStream);
+    LogTrace("TriggerMenuParser") << myCoutStream.str() << "\n" << std::endl;
+  }
+
+  // check that the condition does not exist already in the map
+  if (!insertConditionIntoMap(axol1tlCond, chipNr)) {
+    edm::LogError("TriggerMenuParser") << "    Error: duplicate AXOL1TL condition (" << name << ")" << std::endl;
+    return false;
+  }
+
+  (m_vecAXOL1TLTemplate[chipNr]).push_back(axol1tlCond);
+
+  return true;
+}
+
+
 /**
  * parseExternal Parse an External condition and
  * insert an entry to the conditions map
