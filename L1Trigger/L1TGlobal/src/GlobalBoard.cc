@@ -616,7 +616,11 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
 
           axol1tlCondition->setVerbosity(m_verbosity);
 
+<<<<<<< HEAD
           axol1tlCondition->setModelVersion(m_axol1tlModelVersion);
+=======
+	  axol1tlCondition->setModelVersion(m_axol1tlModelVersion);
+>>>>>>> abc4529667a (added model version from config file)
 
           axol1tlCondition->evaluateConditionStoreResult(iBxInEvent);
 

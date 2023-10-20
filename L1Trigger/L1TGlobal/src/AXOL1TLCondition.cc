@@ -244,7 +244,11 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   return condResult;
 }
 
+<<<<<<< HEAD
 //in order to set model version from config
+=======
+//in order to set model version from config 
+>>>>>>> abc4529667a (added model version from config file)
 void l1t::AXOL1TLCondition::setModelVersion(const std::string modelversionname) {
   m_AXOL1TLmodelversion = modelversionname;
 }

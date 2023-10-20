@@ -199,6 +199,8 @@ namespace l1t {
     void setResetPSCountersEachLumiSec(bool val) { m_resetPSCountersEachLumiSec = val; }
     void setSemiRandomInitialPSCounters(bool val) { m_semiRandomInitialPSCounters = val; }
 
+    void setAXOL1TLModelVersion(std::string axol1tlModelVersion);
+
   public:
     inline void setVerbosity(const int verbosity) { m_verbosity = verbosity; }
 
