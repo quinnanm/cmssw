@@ -236,6 +236,8 @@ namespace l1t {
     int m_bxFirst_;
     int m_bxLast_;
 
+    std::string m_axol1tlModelVersion = "NULL";
+
     std::bitset<GlobalAlgBlk::maxPhysicsTriggers> m_gtlAlgorithmOR;
     std::bitset<GlobalAlgBlk::maxPhysicsTriggers> m_gtlDecisionWord;
 
