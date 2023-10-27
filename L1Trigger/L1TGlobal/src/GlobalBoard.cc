@@ -633,25 +633,6 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
           //delete axol1tlCCondition;
 
         } break;
-        case CondAXOL1TL: {
-          AXOL1TLCondition* axol1tlCondition = new AXOL1TLCondition(itCond->second, this);
-
-          axol1tlCondition->setVerbosity(m_verbosity);
-
-          axol1tlCondition->evaluateConditionStoreResult(iBxInEvent);
-
-          cMapResults[itCond->first] = axol1tlCondition;
-
-          if (m_verbosity && m_isDebugEnabled) {
-            std::ostringstream myCout;
-            axol1tlCondition->print(myCout);
-
-            edm::LogWarning("L1TGlobal") << "axol1tlCondition " << myCout.str();
-          }
-          //delete axol1tlCCondition;
-  
-        } break;
-
 
         case CondExternal: {
           ExternalCondition* extCondition = new ExternalCondition(itCond->second, this);
