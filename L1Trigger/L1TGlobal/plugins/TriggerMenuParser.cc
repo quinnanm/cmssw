@@ -313,6 +313,7 @@ void l1t::TriggerMenuParser::parseCondFormats(const L1TUtmTriggerMenu* utmMenu) 
 
           //parse AXOL1TL
         } else if (condition.getType() == esConditionType::AnomalyDetectionTrigger) {
+	  std::cout << "PARSING AXOL1TL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
           parseAXOL1TL(condition, chipNr);
 	  
           //parse Muons
@@ -2605,6 +2606,8 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
 
     switch (cut.getCutType()) { 
     case esCutType::AnomalyScore:
+      std::cout << "CUT TYPE: " << cut.getCutType() << std::endl; 
+      std::cout << "CUT MAX: " << cut.getMaximum().value << " CUT MIN: " << cut.getMinimum().value << std::endl; 
       lowerThresholdInd = cut.getMinimum().value;
       upperThresholdInd = cut.getMaximum().value;
       break;

@@ -91,6 +91,7 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   //HLS4ML stuff
   std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion;
+  // std::string AXOL1TLmodelversion = "GTADModel_v1";// original loading method, replaced by config method
   hls4mlEmulator::ModelLoader loader(AXOL1TLmodelversion);
   std::shared_ptr<hls4mlEmulator::Model> model;
   model = loader.load_model();
@@ -213,6 +214,13 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
     ADModelInput[index++] = JetInput[idJ];
   }
 
+  cout << "------------------ Inputs (all elements)-----------------" << std::endl;
+  cout << "ADModelInput: [";
+  for (int i = 0; i < NInputs; i++) {
+    cout << ADModelInput[i] << ", ";
+  }
+  cout << "]" << std::endl;
+  
   //now run the inference
   model->prepare_input(ADModelInput);  //scaling internal here
   model->predict();
@@ -222,6 +230,17 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   loss = ADModelResult.second;
   score = ((loss).to_float()) * 16.0;  //scaling to match threshold
 
+  cout << "------------------ outputs -----------------" << std::endl;
+  int NResults = sizeof(result) / sizeof(result[0]);
+  cout << "ADModelResult: [";
+  for (int i = 0; i < NResults; i++) {
+    cout << result[i] << ", ";
+  }
+  cout << "]" << std::endl; 
+  cout << "loss: " << loss << std::endl;
+  cout << "score float(loss*16) :" << score << std::endl;
+  cout << "----------------------------------" << std::endl;
+  
   //number of objects/thrsholds to check
   int iCondition = 0;  // number of conditions: there is only one
   int nObjInCond = m_gtAXOL1TLTemplate->nrObjects();
@@ -240,6 +259,17 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   condResult |= passCondition;  //condresult true if passCondition true else it is false
 
+
+  //trigger printouts
+  cout << "\n objPar.minAXOL1TLThreshold: " << objPar.minAXOL1TLThreshold << std::endl;
+  if (passCondition) {
+    cout
+      << "===> AXOCondition::evaluateCondition, PASS! This event passed the condition." << std::endl;
+  } else
+    cout
+      << "===> AXOCondition::evaluateCondition, FAIL! This event failed the condition." << std::endl;
+  cout << "condResult: " << condResult << std::endl;
+  
   //return result
   return condResult;
 }

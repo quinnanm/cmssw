@@ -270,7 +270,7 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
   // process event iEvent
   // get / update the stable parameters from the EventSetup
   // local cache & check on cacheIdentifier
-
+  
   unsigned long long l1GtParCacheID = evSetup.get<L1TGlobalParametersRcd>().cacheIdentifier();
 
   if (m_l1GtParCacheID != l1GtParCacheID) {
