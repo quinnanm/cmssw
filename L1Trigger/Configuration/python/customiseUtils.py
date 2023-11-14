@@ -76,20 +76,25 @@ def L1TGlobalDigisSummary(process):
 def L1TGlobalMenuXML(process):
     process.load('L1Trigger.L1TGlobal.GlobalParameters_cff')
     process.load('L1Trigger.L1TGlobal.TriggerMenu_cff')
-    process.TriggerMenu.L1TriggerMenuFile = cms.string('L1Menu_adt_topo_test_v2-d1.xml')
     return process
 
-def L1TGlobalSimDigisSummary(process):
-    print("L1T INFO:  will dump a summary of simulated L1T Global output to screen.")
-    process.l1tSimGlobalSummary = cms.EDAnalyzer(
+def L1TGlobalDigisSummary(process):
+    print("L1T INFO:  will dump a summary of unpacked L1T Global output to screen.")
+    process.l1tGlobalSummary = cms.EDAnalyzer(
         'L1TGlobalSummary',
-        AlgInputTag = cms.InputTag("simGtStage2Digis"),
-        ExtInputTag = cms.InputTag("simGtStage2Digis"),
+        AlgInputTag = cms.InputTag("gtStage2Digis"),
+        ExtInputTag = cms.InputTag("gtStage2Digis"),
         DumpTrigResults = cms.bool(False), # per event dump of trig results
         DumpTrigSummary = cms.bool(True), # pre run dump of trig results
         )
-    process.l1tsimglobalsummary = cms.Path(process.l1tSimGlobalSummary)
-    process.schedule.append(process.l1tsimglobalsummary)
+    process.l1tglobalsummary = cms.Path(process.l1tGlobalSummary)
+    process.schedule.append(process.l1tglobalsummary)
+    return process
+
+def L1TGlobalMenuXML(process):
+    process.load('L1Trigger.L1TGlobal.GlobalParameters_cff')
+    process.load('L1Trigger.L1TGlobal.TriggerMenu_cff')
+    process.TriggerMenu.L1TriggerMenuFile = cms.string('L1Menu_test_axo.xml')
     return process
 
 def L1TAddInfoOutput(process):
