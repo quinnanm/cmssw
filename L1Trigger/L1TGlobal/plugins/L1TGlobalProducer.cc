@@ -214,6 +214,9 @@ L1TGlobalProducer::L1TGlobalProducer(const edm::ParameterSet& parSet)
   m_uGtBrd->setResetPSCountersEachLumiSec(m_resetPSCountersEachLumiSec);
   m_uGtBrd->setSemiRandomInitialPSCounters(m_semiRandomInitialPSCounters);
 
+  //load axo model
+  m_AXOL1TLModel = loadAXOL1TLModel(m_AXOL1TLModelVersion); 
+
   // initialize cached IDs
 
   //
@@ -264,6 +267,18 @@ L1TGlobalProducer::L1TGlobalProducer(const edm::ParameterSet& parSet)
 L1TGlobalProducer::~L1TGlobalProducer() {}
 
 // member functions
+
+//load AXOL1TL model #ok that shared ptr and not unique ptr?
+std::shared_ptr<hls4mlEmulator::Model> L1TGlobalProducer::loadAXOL1TLModel(const std::string modelversionname) {
+  //std::string graphPath = edm::FileInPath(cfg.getParameter<std::string>("NNFileName")).fullPath();
+  // return std::make_unique<tensorflow::SessionCache>(graphPath);
+
+  hls4mlEmulator::ModelLoader loader(modelversionname);
+  std::shared_ptr<hls4mlEmulator::Model> model;
+  model = loader.load_model();
+  // return std::make_unique<hls4mlEmulator::Model>(model); //has to be shared pointer
+  return model;
+}
 
 // method called to produce the data
 void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSetup) {
@@ -617,10 +632,10 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
 
   m_uGtBrd->receiveMuonObjectData(iEvent, m_muInputToken, receiveMu, m_nrL1Mu);
 
-  //for getting model version to the condition class, later will come from the menu
+  //for getting model to the condition class via the global board
   //used in runGTL
-  m_uGtBrd->setAXOL1TLModelVersion(m_AXOL1TLModelVersion);
-
+  // m_uGtBrd->setAXOL1TLModelVersion(m_AXOL1TLModelVersion);
+  
   if (m_useMuonShowers)
     m_uGtBrd->receiveMuonShowerObjectData(iEvent, m_muShowerInputToken, receiveMuShower, m_nrL1MuShower);
 
@@ -638,6 +653,7 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
                      m_produceL1GtObjectMapRecord,
                      iBxInEvent,
                      gtObjectMapRecord,
+		     m_AXOL1TLModel.get(),
                      m_numberPhysTriggers,
                      m_nrL1Mu,
                      m_nrL1MuShower,

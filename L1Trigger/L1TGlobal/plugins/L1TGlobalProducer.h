@@ -29,6 +29,8 @@
 #include "CondFormats/L1TObjects/interface/L1TGlobalPrescalesVetosFract.h"
 #include "CondFormats/DataRecord/interface/L1TGlobalPrescalesVetosFractRcd.h"
 
+#include "hls4ml/emulator.h"
+
 class L1TGlobalParameters;
 class L1GtParameters;
 class L1GtBoardMaps;
@@ -49,6 +51,9 @@ public:
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
+  //load axol1tl model
+  static std::shared_ptr<hls4mlEmulator::Model> loadAXOL1TLModel(const std::string modelversionname);
+  
 private:
   /// cached stuff
 
@@ -115,6 +120,9 @@ private:
 
   std::unique_ptr<l1t::GlobalBoard> m_uGtBrd;
 
+  //axol1tl loaded model
+  std::shared_ptr<hls4mlEmulator::Model> m_AXOL1TLModel; //loaded model
+  
   /// input tag for muon collection from GMT
   edm::InputTag m_muInputTag;
   edm::InputTag m_muShowerInputTag;
@@ -193,8 +201,7 @@ private:
   // if false, the prescale counters are initialised to zero
   bool m_semiRandomInitialPSCounters;
 
-  //string to store AXOL1TL model version
-  std::string m_AXOL1TLModelVersion;
+  std::string m_AXOL1TLModelVersion;   //string to store AXOL1TL model version
 
   // switch to load muon showers in the global board
   bool m_useMuonShowers;

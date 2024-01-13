@@ -43,6 +43,9 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 
+#include "ap_fixed.h"
+#include "hls4ml/emulator.h"
+
 // forward declarations
 class TriggerMenu;
 class L1CaloGeometry;
@@ -105,6 +108,7 @@ namespace l1t {
                 const bool produceL1GtObjectMapRecord,
                 const int iBxInEvent,
                 std::unique_ptr<GlobalObjectMapRecord>& gtObjectMapRecord,  //GTO
+		const hls4mlEmulator::Model* m_axol1tlmodel,
                 const unsigned int numberPhysTriggers,
                 const int nrL1Mu,
                 const int nrL1MuShower,
@@ -199,7 +203,7 @@ namespace l1t {
     void setResetPSCountersEachLumiSec(bool val) { m_resetPSCountersEachLumiSec = val; }
     void setSemiRandomInitialPSCounters(bool val) { m_semiRandomInitialPSCounters = val; }
 
-    void setAXOL1TLModelVersion(std::string axol1tlModelVersion);
+    // void setAXOL1TLModelVersion(std::string axol1tlModelVersion);
 
   public:
     inline void setVerbosity(const int verbosity) { m_verbosity = verbosity; }
@@ -217,6 +221,9 @@ namespace l1t {
 
     const L1MuTriggerScales* m_l1MuTriggerScales;
     unsigned long long m_l1MuTriggerScalesCacheID;
+
+    //pointer to axol1tl model
+    const hls4mlEmulator::Model* m_axol1tlmodel;
 
     // conversions for eta and phi
     //    L1GtEtaPhiConversions* m_gtEtaPhiConversions;
@@ -238,8 +245,9 @@ namespace l1t {
     int m_bxFirst_;
     int m_bxLast_;
 
-    std::string m_axol1tlModelVersion = "NULL";
-
+    //for axol1tl
+    // std::string m_axol1tlModelVersion = "NULL";
+    
     std::bitset<GlobalAlgBlk::maxPhysicsTriggers> m_gtlAlgorithmOR;
     std::bitset<GlobalAlgBlk::maxPhysicsTriggers> m_gtlDecisionWord;
 

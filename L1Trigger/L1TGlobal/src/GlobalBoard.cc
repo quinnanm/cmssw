@@ -58,6 +58,9 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/MessageLogger/interface/MessageDrop.h"
 
+#include "ap_fixed.h"
+#include "hls4ml/emulator.h"
+
 // Constructor
 l1t::GlobalBoard::GlobalBoard()
     : m_candL1Mu(new BXVector<const l1t::Muon*>),
@@ -106,10 +109,11 @@ void l1t::GlobalBoard::setBxFirst(int bx) { m_bxFirst_ = bx; }
 
 void l1t::GlobalBoard::setBxLast(int bx) { m_bxLast_ = bx; }
 
-// temporary class for getting axol1tl version from config to condition class until it can be got from the utm menu
-void l1t::GlobalBoard::setAXOL1TLModelVersion(std::string axol1tlModelVersion) {
-  m_axol1tlModelVersion = axol1tlModelVersion;
-}
+// // class for getting axol1tl version from config to condition class until it can be got elsewhere
+// void l1t::GlobalBoard::setAXOL1TLModelVersion(std::string axol1tlModelVersion) {
+//   m_axol1tlModelVersion = axol1tlModelVersion;
+// }
+
 
 void l1t::GlobalBoard::init(const int numberPhysTriggers,
                             const int nrL1Mu,
@@ -480,6 +484,7 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
                               const bool produceL1GtObjectMapRecord,
                               const int iBxInEvent,
                               std::unique_ptr<GlobalObjectMapRecord>& gtObjectMapRecord,
+			      const hls4mlEmulator::Model* m_axol1tlmodel,
                               const unsigned int numberPhysTriggers,
                               const int nrL1Mu,
                               const int nrL1MuShower,
@@ -614,12 +619,12 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
         } break;
 
       case CondAXOL1TL: {
-          AXOL1TLCondition* axol1tlCondition = new AXOL1TLCondition(itCond->second, this);
+	AXOL1TLCondition* axol1tlCondition = new AXOL1TLCondition(itCond->second, this, m_axol1tlmodel);
 
           axol1tlCondition->setVerbosity(m_verbosity);
 
-	  axol1tlCondition->setModelVersion(m_axol1tlModelVersion);
-
+	  // axol1tlCondition->setModelVersion(m_axol1tlModelVersion);
+	  
           axol1tlCondition->evaluateConditionStoreResult(iBxInEvent);
 
           cMapResults[itCond->first] = axol1tlCondition;
