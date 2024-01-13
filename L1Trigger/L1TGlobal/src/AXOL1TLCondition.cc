@@ -47,7 +47,7 @@ l1t::AXOL1TLCondition::AXOL1TLCondition() : ConditionEvaluation() {
 }
 
 //     from base template condition (from event setup usually)
-l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB, const hls4mlEmulator::Model* ptrAXOModel)
+l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB, hls4mlEmulator::Model* ptrAXOModel)
     : ConditionEvaluation(),
       m_gtAXOL1TLTemplate(static_cast<const AXOL1TLTemplate*>(axol1tlTemplate)),
       m_gtGTB(ptrGTB),
@@ -86,7 +86,7 @@ void l1t::AXOL1TLCondition::setGtAXOL1TLTemplate(const AXOL1TLTemplate* caloTemp
 void l1t::AXOL1TLCondition::setuGtB(const GlobalBoard* ptrGTB) { m_gtGTB = ptrGTB; }
 
 // set pointer to model
-void l1t::AXOL1TLCondition::setGtAXOL1TLModel(const hls4mlEmulator::Model* ptrAXOModel) { m_gtAXOL1TLmodel = ptrAXOModel;}
+void l1t::AXOL1TLCondition::setGtAXOL1TLModel(hls4mlEmulator::Model* ptrAXOModel) { m_gtAXOL1TLmodel = ptrAXOModel;}
 
 const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   bool condResult = false;

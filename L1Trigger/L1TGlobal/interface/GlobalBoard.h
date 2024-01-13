@@ -108,7 +108,7 @@ namespace l1t {
                 const bool produceL1GtObjectMapRecord,
                 const int iBxInEvent,
                 std::unique_ptr<GlobalObjectMapRecord>& gtObjectMapRecord,  //GTO
-		const hls4mlEmulator::Model* m_axol1tlmodel,
+		hls4mlEmulator::Model* m_axol1tlmodel,
                 const unsigned int numberPhysTriggers,
                 const int nrL1Mu,
                 const int nrL1MuShower,
