@@ -108,7 +108,8 @@ namespace l1t {
                 const bool produceL1GtObjectMapRecord,
                 const int iBxInEvent,
                 std::unique_ptr<GlobalObjectMapRecord>& gtObjectMapRecord,  //GTO
-		hls4mlEmulator::Model* m_axol1tlmodel,
+		const std::shared_ptr<hls4mlEmulator::Model> m_axol1tlmodel,
+		// const hls4mlEmulator::Model* m_axol1tlmodel,
                 const unsigned int numberPhysTriggers,
                 const int nrL1Mu,
                 const int nrL1MuShower,
@@ -223,7 +224,8 @@ namespace l1t {
     unsigned long long m_l1MuTriggerScalesCacheID;
 
     //pointer to axol1tl model
-    const hls4mlEmulator::Model* m_axol1tlmodel;
+    // const hls4mlEmulator::Model* m_axol1tlmodel;
+    const std::shared_ptr<hls4mlEmulator::Model> m_axol1tlmodel;
 
     // conversions for eta and phi
     //    L1GtEtaPhiConversions* m_gtEtaPhiConversions;

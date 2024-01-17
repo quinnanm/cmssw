@@ -484,7 +484,8 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
                               const bool produceL1GtObjectMapRecord,
                               const int iBxInEvent,
                               std::unique_ptr<GlobalObjectMapRecord>& gtObjectMapRecord,
-			      hls4mlEmulator::Model* m_axol1tlmodel,
+			      const std::shared_ptr<hls4mlEmulator::Model> m_axol1tlmodel,
+			      // const hls4mlEmulator::Model* m_axol1tlmodel,
                               const unsigned int numberPhysTriggers,
                               const int nrL1Mu,
                               const int nrL1MuShower,
@@ -620,6 +621,7 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
 
       case CondAXOL1TL: {
 	AXOL1TLCondition* axol1tlCondition = new AXOL1TLCondition(itCond->second, this, m_axol1tlmodel);
+	if (m_axol1tlmodel) {std::cout << "MODEL POINTER EXISTS IN GLOBALBOARD! "<<m_axol1tlmodel << std::endl;}
 
           axol1tlCondition->setVerbosity(m_verbosity);
 

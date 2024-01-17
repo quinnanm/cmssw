@@ -216,7 +216,7 @@ L1TGlobalProducer::L1TGlobalProducer(const edm::ParameterSet& parSet)
 
   //load axo model
   m_AXOL1TLModel = loadAXOL1TLModel(m_AXOL1TLModelVersion); 
-
+  
   // initialize cached IDs
 
   //
@@ -269,10 +269,11 @@ L1TGlobalProducer::~L1TGlobalProducer() {}
 // member functions
 
 //load AXOL1TL model #ok that shared ptr and not unique ptr?
-std::shared_ptr<hls4mlEmulator::Model> L1TGlobalProducer::loadAXOL1TLModel(const std::string modelversionname) {
-  //std::string graphPath = edm::FileInPath(cfg.getParameter<std::string>("NNFileName")).fullPath();
-  // return std::make_unique<tensorflow::SessionCache>(graphPath);
+std::shared_ptr<hls4mlEmulator::Model> L1TGlobalProducer::loadAXOL1TLModel( std::string modelversionname) {
 
+  modelversionname = "L1Trigger/L1TGlobal/test/GTADModel_v3"; //overrides config model with .so file located in test dir, comment in/out if needed
+  std::cout << "loading model... " << modelversionname << std::endl;
+  
   hls4mlEmulator::ModelLoader loader(modelversionname);
   std::shared_ptr<hls4mlEmulator::Model> model;
   model = loader.load_model();
@@ -646,6 +647,8 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
     //  run GTL
     LogDebug("L1TGlobalProducer") << "\nL1TGlobalProducer : running GTL  for bx = " << iBxInEvent << "\n" << std::endl;
 
+    //check model pointer is not null
+    if (m_AXOL1TLModel) {std::cout << "MODEL POINTER EXISTS IN GLOBALPRODUCER! "<< m_AXOL1TLModel << std::endl;}
     //  Run the GTL for this BX
     m_uGtBrd->runGTL(iEvent,
                      evSetup,
@@ -653,7 +656,7 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
                      m_produceL1GtObjectMapRecord,
                      iBxInEvent,
                      gtObjectMapRecord,
-		     m_AXOL1TLModel.get(),
+		     m_AXOL1TLModel,//.get(), ////<-for raw pointer
                      m_numberPhysTriggers,
                      m_nrL1Mu,
                      m_nrL1MuShower,

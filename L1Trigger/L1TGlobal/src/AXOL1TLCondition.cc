@@ -47,7 +47,8 @@ l1t::AXOL1TLCondition::AXOL1TLCondition() : ConditionEvaluation() {
 }
 
 //     from base template condition (from event setup usually)
-l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB, hls4mlEmulator::Model* ptrAXOModel)
+l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB, const std::shared_ptr<hls4mlEmulator::Model> ptrAXOModel)
+// l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB, const hls4mlEmulator::Model* ptrAXOModel)
     : ConditionEvaluation(),
       m_gtAXOL1TLTemplate(static_cast<const AXOL1TLTemplate*>(axol1tlTemplate)),
       m_gtGTB(ptrGTB),
@@ -86,11 +87,15 @@ void l1t::AXOL1TLCondition::setGtAXOL1TLTemplate(const AXOL1TLTemplate* caloTemp
 void l1t::AXOL1TLCondition::setuGtB(const GlobalBoard* ptrGTB) { m_gtGTB = ptrGTB; }
 
 // set pointer to model
-void l1t::AXOL1TLCondition::setGtAXOL1TLModel(hls4mlEmulator::Model* ptrAXOModel) { m_gtAXOL1TLmodel = ptrAXOModel;}
+void l1t::AXOL1TLCondition::setGtAXOL1TLModel(const std::shared_ptr<hls4mlEmulator::Model> ptrAXOModel) { m_gtAXOL1TLmodel = ptrAXOModel;}
+// void l1t::AXOL1TLCondition::setGtAXOL1TLModel(const hls4mlEmulator::Model* ptrAXOModel) { m_gtAXOL1TLmodel = ptrAXOModel;}
+//or hls4mlEmulator::Model* ptrAXOModel?
 
 const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   bool condResult = false;
   int useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
+
+  if (m_gtAXOL1TLmodel) {std::cout << "MODEL POINTER EXISTS IN AXOL1TLCONDITION! " << m_gtAXOL1TLmodel <<std::endl;}
 
   //HLS4ML stuff
   //  // std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion; //config method
@@ -244,9 +249,18 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   
   //now run the inference
   //was model, now use m_gtAXOL1TLmodel pointer
-  m_gtAXOL1TLmodel->prepare_input(ADModelInput);  //scaling internal here
-  m_gtAXOL1TLmodel->predict();
-  m_gtAXOL1TLmodel->read_result(&ADModelResult);  // this should be the square sum model result
+  std::cout << "running model inference... " << std::endl;
+
+  //cast the const model as non const so that it interfaces with the emulator.h class properly - workaround
+  hls4mlEmulator::Model* tempmodelraw = const_cast<hls4mlEmulator::Model*>(m_gtAXOL1TLmodel.get());
+  std::shared_ptr<hls4mlEmulator::Model> tempmodel(tempmodelraw);
+  
+  tempmodel->prepare_input(ADModelInput);  //scaling internal here
+  tempmodel->predict();
+  tempmodel->read_result(&ADModelResult);  // this should be the square sum model result
+  // m_gtAXOL1TLmodel->prepare_input(ADModelInput);  //scaling internal here
+  // m_gtAXOL1TLmodel->predict();
+  // m_gtAXOL1TLmodel->read_result(&ADModelResult);  // this should be the square sum model result
 
   result = ADModelResult.first;
   loss = ADModelResult.second;

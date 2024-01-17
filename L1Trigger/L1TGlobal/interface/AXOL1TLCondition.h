@@ -35,7 +35,8 @@ namespace l1t {
     AXOL1TLCondition();
 
     ///     from base template condition (from event setup usually)
-    AXOL1TLCondition(const GlobalCondition*, const GlobalBoard*, hls4mlEmulator::Model*);
+    // AXOL1TLCondition(const GlobalCondition*, const GlobalBoard*, const hls4mlEmulator::Model*);
+    AXOL1TLCondition(const GlobalCondition*, const GlobalBoard*, const std::shared_ptr<hls4mlEmulator::Model>);
 
     // copy constructor
     AXOL1TLCondition(const AXOL1TLCondition&);
@@ -62,9 +63,13 @@ namespace l1t {
     void setuGtB(const GlobalBoard*);
 
     ///   get / set the pointer to model 
-    inline hls4mlEmulator::Model* gtAXOL1TLmodel() const { return m_gtAXOL1TLmodel; }
+    // inline const hls4mlEmulator::Model* gtAXOL1TLmodel() const { return m_gtAXOL1TLmodel; }
 
-    void setGtAXOL1TLModel(hls4mlEmulator::Model*);
+    // void setGtAXOL1TLModel(const hls4mlEmulator::Model*);
+
+    inline const std::shared_ptr<hls4mlEmulator::Model> gtAXOL1TLmodel() const { return m_gtAXOL1TLmodel; }
+
+    void setGtAXOL1TLModel(const std::shared_ptr<hls4mlEmulator::Model>);
 
     // //get/set AXOL1TL model version from global board
     // inline const std::string gtModelVerion() const { return m_AXOL1TLmodelversion; }
@@ -82,7 +87,8 @@ namespace l1t {
     const GlobalBoard* m_gtGTB;
 
     ///pointer to preloaded model 
-    hls4mlEmulator::Model* m_gtAXOL1TLmodel;
+    std::shared_ptr<hls4mlEmulator::Model> m_gtAXOL1TLmodel;
+    // const hls4mlEmulator::Model* m_gtAXOL1TLmodel;
 
     //to set modelversion from globalboard<-globalproducer<-config
     // std::string m_AXOL1TLmodelversion = "NONE";

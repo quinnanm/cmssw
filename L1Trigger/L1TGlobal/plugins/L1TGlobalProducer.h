@@ -52,7 +52,7 @@ public:
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
   //load axol1tl model
-  static std::shared_ptr<hls4mlEmulator::Model> loadAXOL1TLModel(const std::string modelversionname);
+  static std::shared_ptr<hls4mlEmulator::Model> loadAXOL1TLModel(std::string modelversionname);
   
 private:
   /// cached stuff
