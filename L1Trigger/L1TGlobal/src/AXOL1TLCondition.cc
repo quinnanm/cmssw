@@ -90,7 +90,8 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   int useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
 
   //HLS4ML stuff
-  std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion;
+  // std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion; //config loading method
+  std::string AXOL1TLmodelversion = "L1Trigger/L1TGlobal/test/GTADModel_v3"; //for .so file in test dir loading method
   hls4mlEmulator::ModelLoader loader(AXOL1TLmodelversion);
   std::shared_ptr<hls4mlEmulator::Model> model;
   model = loader.load_model();
@@ -129,10 +130,9 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   ap_fixed<18, 13> EtSumInput[EtSumVecSize];
 
   //declare result vectors +score
-  std::array<ap_fixed<10, 7>, 13> result;
+  std::array<ap_fixed<10, 7, AP_RND_CONV,AP_SAT>, 8> result; //v3 
   ap_ufixed<18, 14> loss;
-  std::pair<std::array<ap_fixed<10, 7>, 13>, ap_ufixed<18, 14>>
-      ADModelResult;   //model outputs a pair of the (result vector, loss)
+  std::pair<std::array<ap_fixed<10, 7,AP_RND_CONV,AP_SAT>, 8>, ap_ufixed<18, 14>> ADModelResult;   //model outputs a pair of the (result vector, loss)
   float score = -1.0;  //not sure what the best default is hm??
 
   //check number of input objects we actually have (muons, jets etc)
