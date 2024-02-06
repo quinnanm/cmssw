@@ -2,7 +2,7 @@
 <tmxsd:menu xmlns:tmxsd="http://www.cern.ch/tmxsd/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.cern.ch/tmxsd/1.0.0 menu.xsd">
   <ancestor_id>0</ancestor_id>
   <name>L1Menu_Collisions2023_v1_3_0</name>
-  <uuid_menu>499e8e62-2dca-468f-a149-2bcae247e683</uuid_menu>
+  <uuid_menu>7c2ddcb3-362d-4229-bea6-ffa927e546d6</uuid_menu>
   <uuid_firmware>00000000-0000-0000-0000-000000000000</uuid_firmware>
   <global_tag/>
   <grammar_version>0.11</grammar_version>
@@ -13729,57 +13729,13 @@ https://its.cern.ch/jira/browse/CMSLITDPG-1146</comment>
     </object_requirement>
   </algorithm>
   <algorithm>
-    <name>L1_ADT_0</name>
+    <name>L1_AXO_VLoose</name>
     <expression>ADT[ADT-ASCORE_0]</expression>
     <index>33</index>
     <module_id>0</module_id>
     <module_index>33</module_index>
     <cut>
       <name>ADT-ASCORE_0</name>
-      <object>ADT</object>
-      <type>ASCORE</type>
-      <minimum>+9.7730000000000000E+03</minimum>
-      <maximum>+0.0000000000000000E+00</maximum>
-      <data/>
-    </cut>
-    <object_requirement>
-      <name>ADT</name>
-      <type>ADT</type>
-      <comparison_operator>.ge.</comparison_operator>
-      <threshold>+0.0000000000000000E+00</threshold>
-      <bx_offset>0</bx_offset>
-    </object_requirement>
-  </algorithm>
-  <algorithm>
-    <name>L1_ADT_1</name>
-    <expression>ADT[ADT-ASCORE_1]</expression>
-    <index>34</index>
-    <module_id>0</module_id>
-    <module_index>34</module_index>
-    <cut>
-      <name>ADT-ASCORE_1</name>
-      <object>ADT</object>
-      <type>ASCORE</type>
-      <minimum>+1.1757000000000000E+04</minimum>
-      <maximum>+0.0000000000000000E+00</maximum>
-      <data/>
-    </cut>
-    <object_requirement>
-      <name>ADT</name>
-      <type>ADT</type>
-      <comparison_operator>.ge.</comparison_operator>
-      <threshold>+0.0000000000000000E+00</threshold>
-      <bx_offset>0</bx_offset>
-    </object_requirement>
-  </algorithm>
-  <algorithm>
-    <name>L1_ADT_2</name>
-    <expression>ADT[ADT-ASCORE_2]</expression>
-    <index>35</index>
-    <module_id>0</module_id>
-    <module_index>35</module_index>
-    <cut>
-      <name>ADT-ASCORE_2</name>
       <object>ADT</object>
       <type>ASCORE</type>
       <minimum>+1.5717000000000000E+04</minimum>
@@ -13795,13 +13751,13 @@ https://its.cern.ch/jira/browse/CMSLITDPG-1146</comment>
     </object_requirement>
   </algorithm>
   <algorithm>
-    <name>L1_ADT_3</name>
-    <expression>ADT[ADT-ASCORE_3]</expression>
-    <index>36</index>
+    <name>L1_AXO_Loose</name>
+    <expression>ADT[ADT-ASCORE_1]</expression>
+    <index>34</index>
     <module_id>0</module_id>
-    <module_index>36</module_index>
+    <module_index>34</module_index>
     <cut>
-      <name>ADT-ASCORE_3</name>
+      <name>ADT-ASCORE_1</name>
       <object>ADT</object>
       <type>ASCORE</type>
       <minimum>+1.7596000000000000E+04</minimum>
@@ -13817,13 +13773,13 @@ https://its.cern.ch/jira/browse/CMSLITDPG-1146</comment>
     </object_requirement>
   </algorithm>
   <algorithm>
-    <name>L1_ADT_4</name>
-    <expression>ADT[ADT-ASCORE_4]</expression>
-    <index>37</index>
+    <name>L1_AXO_Nominal</name>
+    <expression>ADT[ADT-ASCORE_2]</expression>
+    <index>35</index>
     <module_id>0</module_id>
-    <module_index>37</module_index>
+    <module_index>35</module_index>
     <cut>
-      <name>ADT-ASCORE_4</name>
+      <name>ADT-ASCORE_2</name>
       <object>ADT</object>
       <type>ASCORE</type>
       <minimum>+1.8580000000000000E+04</minimum>
@@ -13839,35 +13795,13 @@ https://its.cern.ch/jira/browse/CMSLITDPG-1146</comment>
     </object_requirement>
   </algorithm>
   <algorithm>
-    <name>L1_ADT_5</name>
-    <expression>ADT[ADT-ASCORE_5]</expression>
-    <index>38</index>
+    <name>L1_AXO_Tight</name>
+    <expression>ADT[ADT-ASCORE_3]</expression>
+    <index>36</index>
     <module_id>0</module_id>
-    <module_index>38</module_index>
+    <module_index>36</module_index>
     <cut>
-      <name>ADT-ASCORE_5</name>
-      <object>ADT</object>
-      <type>ASCORE</type>
-      <minimum>+1.9170000000000000E+04</minimum>
-      <maximum>+0.0000000000000000E+00</maximum>
-      <data/>
-    </cut>
-    <object_requirement>
-      <name>ADT</name>
-      <type>ADT</type>
-      <comparison_operator>.ge.</comparison_operator>
-      <threshold>+0.0000000000000000E+00</threshold>
-      <bx_offset>0</bx_offset>
-    </object_requirement>
-  </algorithm>
-  <algorithm>
-    <name>L1_ADT_6</name>
-    <expression>ADT[ADT-ASCORE_6]</expression>
-    <index>39</index>
-    <module_id>0</module_id>
-    <module_index>39</module_index>
-    <cut>
-      <name>ADT-ASCORE_6</name>
+      <name>ADT-ASCORE_3</name>
       <object>ADT</object>
       <type>ASCORE</type>
       <minimum>+2.0486000000000000E+04</minimum>
@@ -13883,16 +13817,16 @@ https://its.cern.ch/jira/browse/CMSLITDPG-1146</comment>
     </object_requirement>
   </algorithm>
   <algorithm>
-    <name>L1_ADT_7</name>
-    <expression>ADT[ADT-ASCORE_7]</expression>
-    <index>40</index>
+    <name>L1_AXO_VTight</name>
+    <expression>ADT[ADT-ASCORE_4]</expression>
+    <index>37</index>
     <module_id>0</module_id>
-    <module_index>40</module_index>
+    <module_index>37</module_index>
     <cut>
-      <name>ADT-ASCORE_7</name>
+      <name>ADT-ASCORE_4</name>
       <object>ADT</object>
       <type>ASCORE</type>
-      <minimum>+2.5000000000000000E+04</minimum>
+      <minimum>+3.0161000000000000E+04</minimum>
       <maximum>+0.0000000000000000E+00</maximum>
       <data/>
     </cut>
