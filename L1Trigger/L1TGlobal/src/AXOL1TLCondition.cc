@@ -1,4 +1,4 @@
-/**
+ /**
  * \class AXOL1TLCondition
  *
  *
@@ -34,9 +34,7 @@
 #include "L1Trigger/L1TGlobal/interface/CaloTemplate.h"
 #include "L1Trigger/L1TGlobal/interface/EnergySumTemplate.h"
 #include "L1Trigger/L1TGlobal/interface/GlobalScales.h"
-
 #include "DataFormats/L1Trigger/interface/L1Candidate.h"
-
 #include "L1Trigger/L1TGlobal/interface/GlobalBoard.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -49,15 +47,18 @@ l1t::AXOL1TLCondition::AXOL1TLCondition() : ConditionEvaluation() {
 }
 
 //     from base template condition (from event setup usually)
-l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB)
+l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB, const std::shared_ptr<hls4mlEmulator::Model> ptrAXOModel)
+// l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB, const hls4mlEmulator::Model* ptrAXOModel)
     : ConditionEvaluation(),
       m_gtAXOL1TLTemplate(static_cast<const AXOL1TLTemplate*>(axol1tlTemplate)),
-      m_gtGTB(ptrGTB) {}
+      m_gtGTB(ptrGTB),
+      m_gtAXOL1TLmodel(ptrAXOModel){}
 
 // copy constructor
 void l1t::AXOL1TLCondition::copy(const l1t::AXOL1TLCondition& cp) {
   m_gtAXOL1TLTemplate = cp.gtAXOL1TLTemplate();
   m_gtGTB = cp.gtGTB();
+  m_gtAXOL1TLmodel = cp.gtAXOL1TLmodel();
 
   m_condMaxNumberObjects = cp.condMaxNumberObjects();
   m_condLastResult = cp.condLastResult();
@@ -85,16 +86,37 @@ void l1t::AXOL1TLCondition::setGtAXOL1TLTemplate(const AXOL1TLTemplate* caloTemp
 ///   set the pointer to uGT GlobalBoard
 void l1t::AXOL1TLCondition::setuGtB(const GlobalBoard* ptrGTB) { m_gtGTB = ptrGTB; }
 
+// set pointer to model
+void l1t::AXOL1TLCondition::setGtAXOL1TLModel(const std::shared_ptr<hls4mlEmulator::Model> ptrAXOModel) { m_gtAXOL1TLmodel = ptrAXOModel;}
+// void l1t::AXOL1TLCondition::setGtAXOL1TLModel(const hls4mlEmulator::Model* ptrAXOModel) { m_gtAXOL1TLmodel = ptrAXOModel;}
+//or hls4mlEmulator::Model* ptrAXOModel?
+
 const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   bool condResult = false;
   int useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
 
-  //HLS4ML stuff
-  std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion;  //config loading method
-  hls4mlEmulator::ModelLoader loader(AXOL1TLmodelversion);
-  std::shared_ptr<hls4mlEmulator::Model> model;
-  model = loader.load_model();
+  if (m_gtAXOL1TLmodel) {std::cout << "MODEL POINTER EXISTS IN AXOL1TLCONDITION! " << m_gtAXOL1TLmodel <<std::endl;}
 
+  //HLS4ML stuff
+  //  // std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion; //config method
+  // std::string AXOL1TLmodelversion = "L1Trigger/L1TGlobal/test/GTADModel_v3"; //for .so file located in test dir
+  // hls4mlEmulator::ModelLoader loader(AXOL1TLmodelversion);
+  // std::shared_ptr<hls4mlEmulator::Model> model;
+  // model = loader.load_model();
+  // cout << "loading model... " << AXOL1TLmodelversion << std::endl;
+
+  //load model:
+  // cout << "modelloaded? " << modelloaded << std::endl;
+  // if (!modelloaded){
+  //   loadModel();
+  // }
+
+  //check model loaded from setting in globalboard
+  // std::shared_ptr<hls4mlEmulator::Model> model = m_AXOL1TLmodel;
+  // if (!m_modelloaded){
+  //   cout << "WARNING! AXOL1TL Model not loaded!"  << std::endl; 
+  // }
+  
   // //pointers to objects
   const BXVector<const l1t::Muon*>* candMuVec = m_gtGTB->getCandL1Mu();
   const BXVector<const l1t::L1Candidate*>* candJetVec = m_gtGTB->getCandL1Jet();
@@ -115,30 +137,30 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   //total # inputs in vector is (4+10+4+1)*3 = 57
   const int NInputs = 57;
 
-  //types of inputs and outputs
-  typedef ap_fixed<18, 13> inputtype;
-  typedef std::array<ap_fixed<10, 7, AP_RND_CONV, AP_SAT>, 8> resulttype;  //v3
-  typedef ap_ufixed<18, 14> losstype;
-  typedef std::pair<resulttype, losstype> pairtype;
-  // typedef std::array<ap_fixed<10, 7>, 13> resulttype;  //deprecated v1 type:
-
   //define zero
-  inputtype fillzero = 0.0;
+  ap_fixed<18, 13> fillzero = 0.0;
 
   //AD vector declaration, will fill later
-  inputtype ADModelInput[NInputs] = {};
+  ap_fixed<18, 13> ADModelInput[NInputs] = {};
 
   //initializing vector by type for my sanity
-  inputtype MuInput[MuVecSize];
-  inputtype JetInput[JVecSize];
-  inputtype EgammaInput[EGVecSize];
-  inputtype EtSumInput[EtSumVecSize];
+  ap_fixed<18, 13> MuInput[MuVecSize];
+  ap_fixed<18, 13> JetInput[JVecSize];
+  ap_fixed<18, 13> EgammaInput[EGVecSize];
+  ap_fixed<18, 13> EtSumInput[EtSumVecSize];
 
   //declare result vectors +score
-  resulttype result;
-  losstype loss;
-  pairtype ADModelResult;  //model outputs a pair of the (result vector, loss)
-  float score = -1.0;      //not sure what the best default is hm??
+  // std::array<ap_fixed<10, 7>, 13> result; //v1
+  std::array<ap_fixed<10, 7, AP_RND_CONV,AP_SAT>, 8> result; //v3 
+  // if (m_AXOL1TLmodelversion=="GTADModel_v1"){
+  //   std::array<ap_fixed<10, 7>, 13> result; //v1
+  // } else if (m_AXOL1TLmodelversion=="GTADModel_v3"){
+  //   std::array<ap_fixed<10, 7, AP_RND_CONV,AP_SAT>, 8> result; //v3
+  // }
+  
+  ap_ufixed<18, 14> loss;
+  std::pair<std::array<ap_fixed<10, 7,AP_RND_CONV,AP_SAT>, 8>, ap_ufixed<18, 14>> ADModelResult;   //model outputs a pair of the (result vector, loss)
+  float score = -1.0;  //not sure what the best default is hm??
 
   //check number of input objects we actually have (muons, jets etc)
   int NCandMu = candMuVec->size(useBx);
@@ -218,15 +240,43 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
     ADModelInput[index++] = JetInput[idJ];
   }
 
+  // cout << "------------------ Inputs (all elements)-----------------" << std::endl;
+  // cout << "ADModelInput: [";
+  // for (int i = 0; i < NInputs; i++) {
+  //   cout << ADModelInput[i] << ", ";
+  // }
+  // cout << "]" << std::endl;
+  
   //now run the inference
-  model->prepare_input(ADModelInput);  //scaling internal here
-  model->predict();
-  model->read_result(&ADModelResult);  // this should be the square sum model result
+  //was model, now use m_gtAXOL1TLmodel pointer
+  std::cout << "running model inference... " << std::endl;
+
+  //cast the const model as non const so that it interfaces with the emulator.h class properly - workaround
+  hls4mlEmulator::Model* tempmodelraw = const_cast<hls4mlEmulator::Model*>(m_gtAXOL1TLmodel.get());
+  std::shared_ptr<hls4mlEmulator::Model> tempmodel(tempmodelraw);
+  
+  tempmodel->prepare_input(ADModelInput);  //scaling internal here
+  tempmodel->predict();
+  tempmodel->read_result(&ADModelResult);  // this should be the square sum model result
+  // m_gtAXOL1TLmodel->prepare_input(ADModelInput);  //scaling internal here
+  // m_gtAXOL1TLmodel->predict();
+  // m_gtAXOL1TLmodel->read_result(&ADModelResult);  // this should be the square sum model result
 
   result = ADModelResult.first;
   loss = ADModelResult.second;
   score = ((loss).to_float()) * 16.0;  //scaling to match threshold
 
+  // cout << "------------------ outputs -----------------" << std::endl;
+  // int NResults = sizeof(result) / sizeof(result[0]);
+  // cout << "ADModelResult: [";
+  // for (int i = 0; i < NResults; i++) {
+  //   cout << result[i] << ", ";
+  // }
+  // cout << "]" << std::endl; 
+  // cout << "loss: " << loss << std::endl;
+  // cout << "score float(loss*16) :" << score << std::endl;
+  // cout << "----------------------------------" << std::endl;
+  
   //number of objects/thrsholds to check
   int iCondition = 0;  // number of conditions: there is only one
   int nObjInCond = m_gtAXOL1TLTemplate->nrObjects();
@@ -245,14 +295,27 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   condResult |= passCondition;  //condresult true if passCondition true else it is false
 
+
+  //trigger printouts
+  // cout << "\n objPar.minAXOL1TLThreshold: " << objPar.minAXOL1TLThreshold << std::endl;
+  // if (passCondition) {
+  //   cout
+  //     << "===> AXOCondition::evaluateCondition, PASS! This event passed the condition." << std::endl;
+  // } else
+  //   cout
+  //     << "===> AXOCondition::evaluateCondition, FAIL! This event failed the condition." << std::endl;
+  // cout << "condResult: " << condResult << std::endl;
+  
   //return result
   return condResult;
 }
 
-//in order to set model version from config
-void l1t::AXOL1TLCondition::setModelVersion(const std::string modelversionname) {
-  m_AXOL1TLmodelversion = modelversionname;
-}
+// //in order to set model version from config within global board
+// void l1t::AXOL1TLCondition::setModelVersion(const std::string modelversionname) {
+//   m_AXOL1TLmodelversion = modelversionname;
+//   // cout << "SET MODEL VERSION:"  << modelversionname << std::endl;
+// }
+
 
 void l1t::AXOL1TLCondition::print(std::ostream& myCout) const {
   myCout << "Dummy Print for AXOL1TLCondition" << std::endl;

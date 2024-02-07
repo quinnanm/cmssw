@@ -29,6 +29,8 @@
 #include "CondFormats/L1TObjects/interface/L1TGlobalPrescalesVetosFract.h"
 #include "CondFormats/DataRecord/interface/L1TGlobalPrescalesVetosFractRcd.h"
 
+#include "hls4ml/emulator.h"
+
 class L1TGlobalParameters;
 class L1GtParameters;
 class L1GtBoardMaps;
@@ -49,6 +51,9 @@ public:
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
+  //load axol1tl model
+  // std::unique_ptr<hls4mlEmulator::ModelLoader> loadAXOL1TLModel(std::string modelversionname);
+  
 private:
   /// cached stuff
 
@@ -115,13 +120,17 @@ private:
 
   std::unique_ptr<l1t::GlobalBoard> m_uGtBrd;
 
-  /// input tag for muon collection from the Global Muon Trigger (GMT)
+  //axol1tl loaded model
+  // std::unique_ptr<hls4mlEmulator::ModelLoader> m_AXOL1TLModelLoader; //loaded model
+  // std::shared_ptr<hls4mlEmulator::Model> m_AXOL1TLModel; //loaded model
+  
+  /// input tag for muon collection from GMT
   edm::InputTag m_muInputTag;
   edm::InputTag m_muShowerInputTag;
   edm::EDGetTokenT<BXVector<l1t::Muon>> m_muInputToken;
   edm::EDGetTokenT<BXVector<l1t::MuonShower>> m_muShowerInputToken;
 
-  /// input tag for calorimeter collections from Calo Layer 2 (GCT) or Zero Degree Calorimeter (ZDC)
+  /// input tag for calorimeter collections from GCT
   edm::InputTag m_egInputTag;
   edm::InputTag m_tauInputTag;
   edm::InputTag m_jetInputTag;
@@ -195,11 +204,11 @@ private:
   // if false, the prescale counters are initialised to zero
   bool m_semiRandomInitialPSCounters;
 
-  //string to store AXOL1TL model version
-  std::string m_AXOL1TLModelVersion;
+  std::string m_AXOL1TLModelVersion;   //string to store AXOL1TL model version
 
   // switch to load muon showers in the global board
   bool m_useMuonShowers;
+
 };
 
 #endif  // L1TGlobalProducer_h

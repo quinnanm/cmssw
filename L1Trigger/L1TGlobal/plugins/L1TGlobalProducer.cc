@@ -218,6 +218,17 @@ L1TGlobalProducer::L1TGlobalProducer(const edm::ParameterSet& parSet)
   m_uGtBrd->setResetPSCountersEachLumiSec(m_resetPSCountersEachLumiSec);
   m_uGtBrd->setSemiRandomInitialPSCounters(m_semiRandomInitialPSCounters);
 
+  //load axo model
+  // m_AXOL1TLModelLoader = loadAXOL1TLModel(m_AXOL1TLModelVersion); //try loader not model
+
+  // m_AXOL1TLModel = loadAXOL1TLModel(m_AXOL1TLModelVersion); 
+  //try without the function... could we return the loader instead of the model?
+  // std::string modelversionname = "L1Trigger/L1TGlobal/test/GTADModel_v3"; //overrides config model with .so file located in test dir, comment in/out if needed
+  // std::cout << "loading model... " << modelversionname << std::endl;
+  
+  // hls4mlEmulator::ModelLoader loader(modelversionname);
+  // m_AXOL1TLModel = loader.load_model();
+  
   // initialize cached IDs
 
   //
@@ -269,12 +280,29 @@ L1TGlobalProducer::~L1TGlobalProducer() {}
 
 // member functions
 
+//load AXOL1TL model #ok that shared ptr and not unique ptr?
+// std::unique_ptr<hls4mlEmulator::ModelLoader> L1TGlobalProducer::loadAXOL1TLModel( std::string modelversionname) {
+// // std::shared_ptr<hls4mlEmulator::Model> L1TGlobalProducer::loadAXOL1TLModel( std::string modelversionname) {
+
+//   modelversionname = "L1Trigger/L1TGlobal/test/GTADModel_v3"; //overrides config model with .so file located in test dir, comment in/out if needed
+//   std::cout << "loading model... " << modelversionname << std::endl;
+  
+//   hls4mlEmulator::ModelLoader loader(modelversionname);
+//   // std::shared_ptr<hls4mlEmulator::Model> model;
+//   // model = loader.load_model();
+//   ////// return std::make_unique<hls4mlEmulator::Model>(model); //has to be shared pointer
+//   // return model;
+//   //try returning loader rather than model
+//   // return std::make_unique<loader>;
+//   return std::make_unique<hls4mlEmulator::ModelLoader>(loader);
+// }
+
 // method called to produce the data
 void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSetup) {
   // process event iEvent
   // get / update the stable parameters from the EventSetup
   // local cache & check on cacheIdentifier
-
+  
   unsigned long long l1GtParCacheID = evSetup.get<L1TGlobalParametersRcd>().cacheIdentifier();
 
   if (m_l1GtParCacheID != l1GtParCacheID) {
@@ -377,8 +405,8 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
                                                gtParser.vecMuonShowerTemplate(),
                                                gtParser.vecCaloTemplate(),
                                                gtParser.vecEnergySumTemplate(),
-                                               gtParser.vecEnergySumZdcTemplate(),
-                                               gtParser.vecAXOL1TLTemplate(),
+					       gtParser.vecEnergySumZdcTemplate(),
+					       gtParser.vecAXOL1TLTemplate(),
                                                gtParser.vecExternalTemplate(),
                                                gtParser.vecCorrelationTemplate(),
                                                gtParser.vecCorrelationThreeBodyTemplate(),
@@ -613,7 +641,7 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
                                   m_tauInputToken,
                                   m_jetInputToken,
                                   m_sumInputToken,
-                                  m_sumZdcInputToken,
+				  m_sumZdcInputToken,
                                   receiveEG,
                                   m_nrL1EG,
                                   receiveTau,
@@ -621,14 +649,14 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
                                   receiveJet,
                                   m_nrL1Jet,
                                   receiveEtSums,
-                                  receiveEtSumsZdc);
+				  receiveEtSumsZdc);
 
   m_uGtBrd->receiveMuonObjectData(iEvent, m_muInputToken, receiveMu, m_nrL1Mu);
 
-  //for getting model version to the condition class, later will come from the menu
+  //for getting model to the condition class via the global board
   //used in runGTL
-  m_uGtBrd->setAXOL1TLModelVersion(m_AXOL1TLModelVersion);
-
+  // m_uGtBrd->setAXOL1TLModelVersion(m_AXOL1TLModelVersion);
+  
   if (m_useMuonShowers)
     m_uGtBrd->receiveMuonShowerObjectData(iEvent, m_muShowerInputToken, receiveMuShower, m_nrL1MuShower);
 
@@ -639,6 +667,8 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
     //  run GTL
     LogDebug("L1TGlobalProducer") << "\nL1TGlobalProducer : running GTL  for bx = " << iBxInEvent << "\n" << std::endl;
 
+    //check model pointer is not null
+    // if (m_AXOL1TLModelLoader.get()) {std::cout << "MODEL POINTER EXISTS IN GLOBALPRODUCER! "<< m_AXOL1TLModelLoader.get() << std::endl;}
     //  Run the GTL for this BX
     m_uGtBrd->runGTL(iEvent,
                      evSetup,
@@ -646,6 +676,7 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
                      m_produceL1GtObjectMapRecord,
                      iBxInEvent,
                      gtObjectMapRecord,
+		     m_AXOL1TLModelVersion,//.get(), ////<-for raw pointer
                      m_numberPhysTriggers,
                      m_nrL1Mu,
                      m_nrL1MuShower,

@@ -10,6 +10,8 @@
 // system include files
 #include <iosfwd>
 #include <string>
+#include "ap_fixed.h"
+#include "hls4ml/emulator.h"
 
 // user include files
 //   base classes
@@ -33,7 +35,8 @@ namespace l1t {
     AXOL1TLCondition();
 
     ///     from base template condition (from event setup usually)
-    AXOL1TLCondition(const GlobalCondition*, const GlobalBoard*);
+    // AXOL1TLCondition(const GlobalCondition*, const GlobalBoard*, const hls4mlEmulator::Model*);
+    AXOL1TLCondition(const GlobalCondition*, const GlobalBoard*, const std::shared_ptr<hls4mlEmulator::Model>);
 
     // copy constructor
     AXOL1TLCondition(const AXOL1TLCondition&);
@@ -59,10 +62,19 @@ namespace l1t {
 
     void setuGtB(const GlobalBoard*);
 
-    //get / set AXOL1TL model version
-    inline const std::string gtModelVerion() const { return m_AXOL1TLmodelversion; }
+    ///   get / set the pointer to model 
+    // inline const hls4mlEmulator::Model* gtAXOL1TLmodel() const { return m_gtAXOL1TLmodel; }
 
-    void setModelVersion(const std::string modelversionname);
+    // void setGtAXOL1TLModel(const hls4mlEmulator::Model*);
+
+    inline const std::shared_ptr<hls4mlEmulator::Model> gtAXOL1TLmodel() const { return m_gtAXOL1TLmodel; }
+
+    void setGtAXOL1TLModel(const std::shared_ptr<hls4mlEmulator::Model>);
+
+    // //get/set AXOL1TL model version from global board
+    // inline const std::string gtModelVerion() const { return m_AXOL1TLmodelversion; }
+    
+    // void setModelVersion(const std::string modelversionname);
 
   private:
     /// copy function for copy constructor and operator=
@@ -74,8 +86,17 @@ namespace l1t {
     /// pointer to uGt GlobalBoard, to be able to get the trigger objects
     const GlobalBoard* m_gtGTB;
 
+    ///pointer to preloaded model 
+    std::shared_ptr<hls4mlEmulator::Model> m_gtAXOL1TLmodel;
+    // const hls4mlEmulator::Model* m_gtAXOL1TLmodel;
+
     //to set modelversion from globalboard<-globalproducer<-config
-    std::string m_AXOL1TLmodelversion = "NONE";
+    // std::string m_AXOL1TLmodelversion = "NONE";
+    
+    //for loading model in globalboard
+    // std::shared_ptr<hls4mlEmulator::Model> m_AXOL1TLmodel;
+    // bool m_modelloaded = false;
+    
   };
 
 }  // namespace l1t
