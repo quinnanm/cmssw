@@ -670,6 +670,9 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
     //check model pointer is not null
     // if (m_AXOL1TLModelLoader.get()) {std::cout << "MODEL POINTER EXISTS IN GLOBALPRODUCER! "<< m_AXOL1TLModelLoader.get() << std::endl;}
     //  Run the GTL for this BX
+
+    std::cout << "running GTL" << std::endl;
+    
     m_uGtBrd->runGTL(iEvent,
                      evSetup,
                      m_l1GtMenu.get(),
@@ -683,7 +686,9 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
                      m_nrL1EG,
                      m_nrL1Tau,
                      m_nrL1Jet);
+    std::cout << "ran GTL" << std::endl;
 
+    
     //  run FDL
     LogDebug("L1TGlobalProducer") << "\nL1TGlobalProducer : running FDL for bx = " << iBxInEvent << "\n" << std::endl;
 

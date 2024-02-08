@@ -249,33 +249,39 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   
   //now run the inference
   //was model, now use m_gtAXOL1TLmodel pointer
-  std::cout << "running model inference... " << std::endl;
+  std::cout << "running prepare model... " << std::endl;
 
   //cast the const model as non const so that it interfaces with the emulator.h class properly - workaround
   hls4mlEmulator::Model* tempmodelraw = const_cast<hls4mlEmulator::Model*>(m_gtAXOL1TLmodel.get());
   std::shared_ptr<hls4mlEmulator::Model> tempmodel(tempmodelraw);
   
   tempmodel->prepare_input(ADModelInput);  //scaling internal here
+  std::cout << "running predict... " << std::endl;
+  
   tempmodel->predict();
+  std::cout << "running read result... " << std::endl;
+
   tempmodel->read_result(&ADModelResult);  // this should be the square sum model result
   // m_gtAXOL1TLmodel->prepare_input(ADModelInput);  //scaling internal here
   // m_gtAXOL1TLmodel->predict();
   // m_gtAXOL1TLmodel->read_result(&ADModelResult);  // this should be the square sum model result
-
+  std::cout << "done inference... " << std::endl;
+  std::cout << "loss" << ADModelResult.second << std::endl;
+  
   result = ADModelResult.first;
   loss = ADModelResult.second;
   score = ((loss).to_float()) * 16.0;  //scaling to match threshold
 
-  // cout << "------------------ outputs -----------------" << std::endl;
-  // int NResults = sizeof(result) / sizeof(result[0]);
-  // cout << "ADModelResult: [";
-  // for (int i = 0; i < NResults; i++) {
-  //   cout << result[i] << ", ";
-  // }
-  // cout << "]" << std::endl; 
-  // cout << "loss: " << loss << std::endl;
-  // cout << "score float(loss*16) :" << score << std::endl;
-  // cout << "----------------------------------" << std::endl;
+  cout << "------------------ outputs -----------------" << std::endl;
+  int NResults = sizeof(result) / sizeof(result[0]);
+  cout << "ADModelResult: [";
+  for (int i = 0; i < NResults; i++) {
+    cout << result[i] << ", ";
+  }
+  cout << "]" << std::endl; 
+  cout << "loss: " << loss << std::endl;
+  cout << "score float(loss*16) :" << score << std::endl;
+  cout << "----------------------------------" << std::endl;
   
   //number of objects/thrsholds to check
   int iCondition = 0;  // number of conditions: there is only one

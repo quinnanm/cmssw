@@ -530,6 +530,9 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
   const std::string scaleSetName = gtScales.getScalesName();
   LogDebug("L1TGlobal") << " L1 Menu Scales -- Set Name: " << scaleSetName;
 
+  std::cout << "starting GTL" << std::endl;
+
+  
   // Reset AlgBlk for this bx
   m_uGtAlgBlk.reset();
   m_algInitialOr = false;
@@ -543,6 +546,8 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
   hls4mlEmulator::ModelLoader loader(m_axol1tlmodelname);
   // std::shared_ptr<hls4mlEmulator::Model> model;
   // model = loader.load_model();
+  std::cout << "setting m_axol1tlmodel" << std::endl;
+
   const std::shared_ptr<hls4mlEmulator::Model> m_axol1tlmodel = loader.load_model();
   
   const std::vector<std::vector<MuonTemplate>>& corrMuon = m_l1GtMenu->corMuonTemplate();
@@ -572,10 +577,14 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
        itCondOnChip != conditionMap.end();
        itCondOnChip++) {
     iChip++;
+    std::cout << "starting first loop" << std::endl;
+
 
     AlgorithmEvaluation::ConditionEvaluationMap& cMapResults = m_conditionResultMaps[iChip];
 
     for (CItCond itCond = itCondOnChip->begin(); itCond != itCondOnChip->end(); itCond++) {
+      std::cout << "starting second loop and switches" << std::endl;
+
       // evaluate condition
       switch ((itCond->second)->condCategory()) {
         case CondMuon: {
@@ -683,7 +692,8 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
 	  // axol1tlCondition->setModelVersion(m_axol1tlModelVersion);
 	  
           axol1tlCondition->evaluateConditionStoreResult(iBxInEvent);
-
+	  std::cout << "evaluated AXO " << std::endl;
+	  
           cMapResults[itCond->first] = axol1tlCondition;
 
           if (m_verbosity && m_isDebugEnabled) {
@@ -693,6 +703,7 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
             edm::LogWarning("L1TGlobal") << "axol1tlCondition " << myCout.str();
           }
           //delete axol1tlCCondition;
+	  std::cout << "done with print" << std::endl;
 
         } break;
 
@@ -928,7 +939,10 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
         } break;
       }
     }
+    std::cout << "done with  second loop loop" << std::endl;
+    
   }
+  std::cout << "loop over algorithm map" << std::endl;
 
   // -----------------------
   // Loop over algorithm map
@@ -940,7 +954,10 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
 
   for (CItAlgo itAlgo = algorithmMap.begin(); itAlgo != algorithmMap.end(); itAlgo++) {
     AlgorithmEvaluation gtAlg(itAlgo->second);
+    // std::cout << "start evalalg" << std::endl;
+
     gtAlg.evaluateAlgorithm((itAlgo->second).algoChipNumber(), m_conditionResultMaps);
+    std::cout << "done evalALG" << std::endl;
 
     int algBitNumber = (itAlgo->second).algoBitNumber();
     bool algResult = gtAlg.gtAlgoResult();
@@ -1020,6 +1037,8 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
   // loop over condition maps (one map per condition chip)
   // then loop over conditions in the map
   // delete the conditions created with new, zero pointer, do not clear map, keep the vector as is...
+  std::cout << "last loop" << std::endl;
+
   for (std::vector<AlgorithmEvaluation::ConditionEvaluationMap>::iterator itCondOnChip = m_conditionResultMaps.begin();
        itCondOnChip != m_conditionResultMaps.end();
        itCondOnChip++) {
@@ -1027,7 +1046,11 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
       delete itCond->second;
       itCond->second = nullptr;
     }
+    std::cout << "loopcheck" << std::endl;
+
   }
+  std::cout << "done with last loop" << std::endl;
+
 }
 
 // -------
