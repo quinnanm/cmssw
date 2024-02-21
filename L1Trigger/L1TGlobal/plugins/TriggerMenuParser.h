@@ -157,6 +157,10 @@ namespace l1t {
     inline const std::vector<std::vector<AXOL1TLTemplate> >& vecAXOL1TLTemplate() const { return m_vecAXOL1TLTemplate; }
     void setVecAXOL1TLTemplate(const std::vector<std::vector<AXOL1TLTemplate> >&);
 
+    //set the AXO model version so it can be fetched from the GlobalProducer
+    inline const std::string& AXOL1TLModelVersion() const { return m_axol1tlModelVersion; }
+    void setAXOL1TLModelVersion(const std::string&);
+
     //
     inline const std::vector<std::vector<ExternalTemplate> >& vecExternalTemplate() const {
       return m_vecExternalTemplate;
@@ -425,6 +429,9 @@ namespace l1t {
     std::vector<std::vector<CaloTemplate> > m_corCaloTemplate;
     std::vector<std::vector<EnergySumTemplate> > m_corEnergySumTemplate;
 
+    //AXOL1TL Model Version
+    std::string m_axol1tlModelVersion;
+    
     /// map containing the physics algorithms (by name)
     AlgorithmMap m_algorithmMap;
 

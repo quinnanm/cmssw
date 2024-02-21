@@ -112,9 +112,10 @@ void l1t::GlobalBoard::setBxFirst(int bx) { m_bxFirst_ = bx; }
 
 void l1t::GlobalBoard::setBxLast(int bx) { m_bxLast_ = bx; }
 
-// temporary class for getting axol1tl version from config to condition class until it can be got from the utm menu
+// temporary class for getting axol1tl version from triggermenuparser->globalproducer->globalboard
 void l1t::GlobalBoard::setAXOL1TLModelVersion(std::string axol1tlModelVersion) {
   m_axol1tlModelVersion = axol1tlModelVersion;
+  std::cout << "set global board model version" << m_axol1tlModelVersion <<std::endl;
 }
 
 void l1t::GlobalBoard::init(const int numberPhysTriggers,

@@ -147,6 +147,16 @@ void l1t::TriggerMenuParser::setVecAXOL1TLTemplate(const std::vector<std::vector
   m_vecAXOL1TLTemplate = vecAXOL1TLTempl;
 }
 
+//set the AXO model version so it can be fetched from the GlobalProducer
+void l1t::TriggerMenuParser::setAXOL1TLModelVersion( const std::string& axol1tlmodelversion) {
+  if (m_axol1tlModelVersion.empty()) {
+    std::cout << "filling model version" << std::endl;
+    m_axol1tlModelVersion = axol1tlmodelversion;
+  // } else {
+  //   std::cout << "model version already filled as " << m_axol1tlModelVersion << std::endl;
+  }
+}
+
 void l1t::TriggerMenuParser::setVecExternalTemplate(
     const std::vector<std::vector<ExternalTemplate> >& vecExternalTempl) {
   m_vecExternalTemplate = vecExternalTempl;
@@ -322,7 +332,7 @@ void l1t::TriggerMenuParser::parseCondFormats(const L1TUtmTriggerMenu* utmMenu) 
           parseEnergySumZdc(condition, chipNr, false);
 
           //parse AXOL1TL
-        } else if (condition.getType() == esConditionType::AnomalyDetectionTrigger) {
+        } else if (condition.getType() == esConditionType::Axol1tlTrigger) {
           parseAXOL1TL(condition, chipNr);
 
           //parse Muons
@@ -2724,6 +2734,9 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
   std::string condition = "axol1tl";
   std::string type = l1t2string(condAXOL1TL.getType());
   std::string name = l1t2string(condAXOL1TL.getName());
+  // added for utm v0.12.0
+  // std::string model = l1t2string(getModel(condAXOL1TL));
+  
 
   LogDebug("TriggerMenuParser") << " ****************************************** " << std::endl
                                 << "     (in parseAXOL1TL) " << std::endl
@@ -2731,9 +2744,16 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
                                 << " type      = " << type << std::endl
                                 << " name      = " << name << std::endl;
 
+  std::cout << " ****************************************** " << std::endl
+                                << "     (in parseAXOL1TL) " << std::endl
+                                << " condition = " << condition << std::endl
+                                << " type      = " << type << std::endl
+	    << " name      = " << name << std::endl;
+
   const int nrObj = 1;
   GtConditionType cType = TypeAXOL1TL;
-
+  //here I think you can pass the model version to the globalproducer
+  
   std::vector<AXOL1TLTemplate::ObjectParameter> objParameter(nrObj);
 
   if (int(condAXOL1TL.getObjects().size()) != nrObj) {
@@ -2752,19 +2772,38 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
   int lowerThresholdInd = 0;
   int upperThresholdInd = -1;
 
-  const std::vector<L1TUtmCut>& cuts = object.getCuts();
-  for (size_t kk = 0; kk < cuts.size(); kk++) {
-    const L1TUtmCut& cut = cuts.at(kk);
+  //save model and threshold
+  std::string model = "NONE";
+  
+  if (object.getType() == tmeventsetup::Axol1tl) {
 
-    switch (cut.getCutType()) {
-      case esCutType::AnomalyScore:
+    std::cout << "obj type "<<object.getType() << std::endl;
+
+    const std::vector<L1TUtmCut>& cuts = object.getCuts();
+    for (size_t kk = 0; kk < cuts.size(); kk++) {
+      const L1TUtmCut& cut = cuts.at(kk);      
+
+      std::cout << "cut type "<<cut.getCutType() << std::endl;
+      
+      //save model
+      if(cut.getCutType()==tmeventsetup::Model){
+      	model = cut.getData();
+	std::cout << "saved model " << model << std::endl; 
+      }
+      //save score
+      switch (cut.getCutType()) {
+      case esCutType::Score:
         lowerThresholdInd = cut.getMinimum().value;
         upperThresholdInd = cut.getMaximum().value;
+	std::cout << "saved score " << lowerThresholdInd << std::endl; 
         break;
       default:
         break;
-    }  //end switch
-  }    //end cut loop
+      }  //end switch
+    }    //end cut loop
+  }//else{break;} //end if getType
+
+  //need to add condition for if model type not set
 
   //fill object params
   objParameter[0].minAXOL1TLThreshold = lowerThresholdInd;
@@ -2777,6 +2816,7 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
   axol1tlCond.setCondChipNr(chipNr);
   axol1tlCond.setCondRelativeBx(relativeBx);
   axol1tlCond.setConditionParameter(objParameter);
+  axol1tlCond.setModelVersion(model); //not used for model version but is an alternative
 
   if (edm::isDebugEnabled()) {
     std::ostringstream myCoutStream;
@@ -2791,6 +2831,9 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
   }
 
   (m_vecAXOL1TLTemplate[chipNr]).push_back(axol1tlCond);
+
+  //if model version has not been filled yet, fill it
+  l1t::TriggerMenuParser::setAXOL1TLModelVersion(model);
 
   return true;
 }

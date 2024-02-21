@@ -90,7 +90,11 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   int useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
 
   //HLS4ML stuff
-  std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion;  //config loading method
+  std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion;  //loading from menu
+
+  //if model version is not valid, then do nothing
+  if (m_AXOL1TLmodelversion=="NONE"){return false;}
+  //otherwise load model and run inference
   hls4mlEmulator::ModelLoader loader(AXOL1TLmodelversion);
   std::shared_ptr<hls4mlEmulator::Model> model;
   model = loader.load_model();
@@ -227,6 +231,17 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   loss = ADModelResult.second;
   score = ((loss).to_float()) * 16.0;  //scaling to match threshold
 
+  cout << "------------------ outputs -----------------" << std::endl;
+  int NResults = sizeof(result) / sizeof(result[0]);
+  cout << "ADModelResult: [";
+  for (int i = 0; i < NResults; i++) {
+    cout << result[i] << ", ";
+  }
+  cout << "]" << std::endl; 
+  cout << "loss: " << loss << std::endl;
+  cout << "score float(loss*16) :" << score << std::endl;
+  cout << "----------------------------------" << std::endl;
+  
   //number of objects/thrsholds to check
   int iCondition = 0;  // number of conditions: there is only one
   int nObjInCond = m_gtAXOL1TLTemplate->nrObjects();
@@ -245,13 +260,31 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   condResult |= passCondition;  //condresult true if passCondition true else it is false
 
+  /////// trigger printouts
+  cout << "\n objPar.minAXOL1TLThreshold: " << objPar.minAXOL1TLThreshold << std::endl;
+  if (passCondition) {
+    cout
+      << "===> AXOCondition::evaluateCondition, PASS! This event passed the condition." << std::endl;
+  } else
+    cout
+      << "===> AXOCondition::evaluateCondition, FAIL! This event failed the condition." << std::endl;
+  cout << "condResult: " << condResult << std::endl;
+  
   //return result
   return condResult;
 }
 
-//in order to set model version from config
+//in order to set model version from menu->triggermenuparser->globalproducer->globalboard->here
 void l1t::AXOL1TLCondition::setModelVersion(const std::string modelversionname) {
-  m_AXOL1TLmodelversion = modelversionname;
+  //case for model version. if version can't be found, then condition returns false
+  if (modelversionname == "v3") {
+    m_AXOL1TLmodelversion = "GTADModel_v3";    
+  // } else if (modelversionname == "v3") {
+  //   m_AXOL1TLmodelversion = "GTADModel_v3";    
+  } else {
+    std::cout << "AXO MODEL NOT FOUND: WILL NOT EVALUATE CONDITION" << std::endl;
+  }
+  std::cout << "set condition model version" << m_AXOL1TLmodelversion <<std::endl; 
 }
 
 void l1t::AXOL1TLCondition::print(std::ostream& myCout) const {
