@@ -402,6 +402,7 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
 
     m_l1GtMenuCacheID = l1GtMenuCacheID;
 
+<<<<<<< HEAD
     //get model version to condition class via GlobalBoard.runGTL, comes from menu rather than config
     //for throwing exception when using L1Menu_Collisions2024_v1_0_0
     if ((gtParser.gtTriggerMenuName() == "L1Menu_Collisions2024_v1_0_0") ||
