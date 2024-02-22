@@ -169,14 +169,7 @@ void l1t::TriggerMenuParser::setVecCorrelationWithOverlapRemovalTemplate(
 
 //set the AXO model version so it can be fetched from the GlobalProducer
 void l1t::TriggerMenuParser::setAXOL1TLModelVersion(const std::string& axol1tlmodelversion) {
-<<<<<<< HEAD
   m_axol1tlModelVersion = axol1tlmodelversion;
-=======
-  if (m_axol1tlModelVersion.empty()) {  //only fills if has not yet been set
-    std::cout << "filling model version" << std::endl;
-    m_axol1tlModelVersion = axol1tlmodelversion;
-  }
->>>>>>> 321c3b6eabd (added model version from menu changes)
 }
 
 // set the vectors containing the conditions for correlation templates
@@ -2777,6 +2770,7 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
       const L1TUtmCut& cut = cuts.at(kk);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       //save model
       if (cut.getCutType() == tmeventsetup::Model) {
         model = cut.getData();
@@ -2789,10 +2783,11 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
 =======
       std::cout << "cut type " << cut.getCutType() << std::endl;
 
+=======
+>>>>>>> be784a882d1 (removed some couts)
       //save model
       if (cut.getCutType() == tmeventsetup::Model) {
         model = cut.getData();
-        std::cout << "saved model " << model << std::endl;
       }
       //save score
       switch (cut.getCutType()) {
