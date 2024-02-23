@@ -2758,19 +2758,13 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
   int upperThresholdInd = -1;
 
   //save model and threshold
-<<<<<<< HEAD
   std::string model = "";
-=======
-  std::string model = "NONE";
->>>>>>> 321c3b6eabd (added model version from menu changes)
 
   if (object.getType() == tmeventsetup::Axol1tl) {
     const std::vector<L1TUtmCut>& cuts = object.getCuts();
     for (size_t kk = 0; kk < cuts.size(); kk++) {
       const L1TUtmCut& cut = cuts.at(kk);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
       //save model
       if (cut.getCutType() == tmeventsetup::Model) {
         model = cut.getData();
@@ -2780,25 +2774,6 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
         lowerThresholdInd = cut.getMinimum().value;
         upperThresholdInd = cut.getMaximum().value;
       }  //end else if
-=======
-      std::cout << "cut type " << cut.getCutType() << std::endl;
-
-=======
->>>>>>> be784a882d1 (removed some couts)
-      //save model
-      if (cut.getCutType() == tmeventsetup::Model) {
-        model = cut.getData();
-      }
-      //save score
-      switch (cut.getCutType()) {
-        case esCutType::Score:
-          lowerThresholdInd = cut.getMinimum().value;
-          upperThresholdInd = cut.getMaximum().value;
-          break;
-        default:
-          break;
-      }  //end switch
->>>>>>> 321c3b6eabd (added model version from menu changes)
     }    //end cut loop
   }      //end if getType
 
@@ -2829,11 +2804,7 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
 
   (m_vecAXOL1TLTemplate[chipNr]).push_back(axol1tlCond);
 
-<<<<<<< HEAD
   //fill class model version variable
-=======
-  //if class model version variable has not been filled yet, fill it
->>>>>>> 321c3b6eabd (added model version from menu changes)
   l1t::TriggerMenuParser::setAXOL1TLModelVersion(model);
 
   return true;
