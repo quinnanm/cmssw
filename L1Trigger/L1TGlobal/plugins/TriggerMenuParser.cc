@@ -333,6 +333,7 @@ void l1t::TriggerMenuParser::parseCondFormats(const L1TUtmTriggerMenu* utmMenu) 
 
           //parse AXOL1TL
         } else if (condition.getType() == esConditionType::Axol1tlTrigger) {
+	  std::cout << "PARSE AXO" << std::endl;
           parseAXOL1TL(condition, chipNr);
 
           //parse Muons
