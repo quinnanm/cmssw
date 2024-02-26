@@ -92,22 +92,12 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   //HLS4ML stuff
   std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion;  //loading from menu
 
-<<<<<<< HEAD
   //if model version is empty, throw exception. Should not ever happen
   if (AXOL1TLmodelversion == "" || AXOL1TLmodelversion == "GTADModel_") {
     throw cms::Exception("ModelError") << " Error: AXOL1TL model version not set!";
   }
 
   //otherwise load model (if possible) and run inference
-=======
-  //if model version is not valid, do not evaluate the condition
-  if (m_AXOL1TLmodelversion.empty()) {
-    LogDebug("AXOL1TLCondition") << "Warning: AXOL1TL model version not found, not evaluating condition!" << std::endl;
-    return false;
-  }
-
-  //otherwise load model and run inference
->>>>>>> 321c3b6eabd (added model version from menu changes)
   hls4mlEmulator::ModelLoader loader(AXOL1TLmodelversion);
   std::shared_ptr<hls4mlEmulator::Model> model;
 
@@ -276,14 +266,7 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
 //in order to set model version from menu->triggermenuparser->globalproducer->globalboard->here
 void l1t::AXOL1TLCondition::setModelVersion(const std::string modelversionname) {
-<<<<<<< HEAD
   m_AXOL1TLmodelversion = "GTADModel_" + modelversionname;
-=======
-  //cases for model version. if version can't be found, then condition returns false
-  if (modelversionname == "v3") {
-    m_AXOL1TLmodelversion = "GTADModel_v3";
-  }
->>>>>>> 321c3b6eabd (added model version from menu changes)
 }
 
 void l1t::AXOL1TLCondition::print(std::ostream& myCout) const {
