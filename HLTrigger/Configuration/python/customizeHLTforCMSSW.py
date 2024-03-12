@@ -279,4 +279,7 @@ def customizeHLTforCMSSW(process, menuType="GRun"):
     # customizes AXOL1TL condition in the L1 menu 
     process = customizeHLTfor44054(process)
 
+    # customizes AXOL1TL condition in the L1 menu 
+    process = customizeHLTfor44054(process)
+
     return process
