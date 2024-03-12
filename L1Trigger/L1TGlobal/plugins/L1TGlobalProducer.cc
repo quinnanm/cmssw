@@ -414,14 +414,6 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
     }
   }
 
-      edm::LogWarning("L1TGlobalProducer")
-          << "Warning: menu version " << gtParser.gtTriggerMenuName()
-          << " is incompatible with AXOL1TL, will not evaluate conditions" << std::endl;
-    } else {
-      m_AXOL1TLModelVersion = gtParser.AXOL1TLModelVersion();
-    }
-  }
-
   // get / update the board maps from the EventSetup
   // local cache & check on cacheIdentifier
 
