@@ -273,8 +273,6 @@ td::endl;
   // cout << "------------------ outputs -----------------" << std::endl;
   // cout << "ADModelResult: [" << result;
   //   for (const auto& element : result) {
-  //       // Assuming ap_fixed has a method to convert to a double or float for printing.
-  //       // If not, you will need to implement a way to convert or access its value.
   //       std::cout << element.to_float() << ", "; // Using to_double() as an example.
   //   }
   // cout << "]" << std::endl;
