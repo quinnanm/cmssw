@@ -92,6 +92,8 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   //HLS4ML stuff
   std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion;  //loading from menu
 
+  std::cout<< "MODEL: "<< m_AXOL1TLmodelversion << std::endl;
+
   //if model version is empty, throw exception. Should not ever happen unless not found in menu
   if (AXOL1TLmodelversion == "" || AXOL1TLmodelversion == "GTADModel_") {
     throw cms::Exception("ModelError") << " Error model version not found in menu!";
@@ -105,10 +107,14 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   try {
     model = loader.load_model();
   } catch (std::runtime_error& e) {
-    edm::LogWarning("AXOL1TLCondition") << "ERROR: failed to load model version " << AXOL1TLmodelversion
-                                        << ". Not evaluating condition!" << std::endl;
-    return false;
+    // edm::LogWarning("AXOL1TLCondition") << "ERROR: failed to load model version " << AXOL1TLmodelversion
+    //                                     << ". Not evaluating condition!" << std::endl;
+    // return false;
+    // for stopping with exception if model version cannot be loaded
+    throw cms::Exception("ModelError") << " ERROR: failed to load model version " << AXOL1TLmodelversion << std::endl;
   }
+
+  std::cout << "FILLING AXO" <<std::endl;
 
   // //pointers to objects
   const BXVector<const l1t::Muon*>* candMuVec = m_gtGTB->getCandL1Mu();
@@ -259,6 +265,23 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   passCondition = checkCut(objPar.minAXOL1TLThreshold, score, condGEqVal);
 
   condResult |= passCondition;  //condresult true if passCondition true else it is false
+
+  std::cout << "14_1_X" << std::endl;
+  std::cout << "------------------ Inputs (all elements)-----------------" << std::endl;
+  std::cout << "ADModelInput: [";
+  for (int i = 0; i < NInputs; i++) {
+    std::cout << ADModelInput[i] << ", ";
+  }
+  std::cout << "]" << std::endl;
+  // cout << "------------------ outputs -----------------" << std::endl;
+  // cout << "ADModelResult: [" << result;
+  // // for (int i = 0; i < result.size(); i++) {
+  // //   cout << result[i] << ", ";
+  // // }
+  // cout << "]" << std::endl; 
+  // cout << "----------------------------------" << std::endl;
+  std::cout << "score: "<< score << std::endl;
+  std::cout << "thr: "<< objPar.minAXOL1TLThreshold << std::endl;
 
   //return result
   return condResult;

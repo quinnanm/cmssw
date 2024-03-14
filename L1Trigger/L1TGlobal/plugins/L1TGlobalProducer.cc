@@ -403,7 +403,10 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
     m_l1GtMenuCacheID = l1GtMenuCacheID;
 
     //for getting model version to condition class via GlobalBoard.runGTL, comes from menu rather than config
-    if (gtParser.gtTriggerMenuName() == "L1Menu_Collisions2024_v1_0_0") {
+    std::cout << "Menu version: "<< gtParser.gtTriggerMenuName()<< std::endl;
+    std::cout << "Model version: "<< gtParser.AXOL1TLModelVersion()<< std::endl;
+    
+    if (gtParser.gtTriggerMenuName() == "L1Menu_Collisions2024_v1_0_0" || gtParser.gtTriggerMenuName() == "L1Menu_Collisions2024_v0_0_0") {
       // m_AXOL1TLModelVersion = "GTADModel_v3"; //will run, but exception preferred
       throw cms::Exception("ConditionsError")
           << " Error L1T menu version " << gtParser.gtTriggerMenuName()
