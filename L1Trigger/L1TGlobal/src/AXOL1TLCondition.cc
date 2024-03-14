@@ -279,6 +279,7 @@ td::endl;
   //   }
   // cout << "]" << std::endl;
   // cout << "----------------------------------" << std::endl;
+  std::cout << "loss: "<< loss << std::endl;
   std::cout << "score: "<< score << std::endl;
   std::cout << "thr: "<< objPar.minAXOL1TLThreshold << std::endl;
   
