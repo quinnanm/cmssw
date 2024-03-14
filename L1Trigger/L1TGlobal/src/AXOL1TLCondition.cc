@@ -92,6 +92,8 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   //HLS4ML stuff
   std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion;  //loading from menu
 
+  std::cout<< "MODEL: "<< m_AXOL1TLmodelversion << std::endl;
+  
   //if model version is empty, throw exception. Should not ever happen
   if (AXOL1TLmodelversion == "" || AXOL1TLmodelversion == "GTADModel_") {
     throw cms::Exception("ModelError") << " Error: AXOL1TL model version not set!";
@@ -260,6 +262,24 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   condResult |= passCondition;  //condresult true if passCondition true else it is false
 
+  std::cout << "14_0_X" << std::endl;
+  std::cout << "------------------ Inputs (all elements)-----------------" << s\
+td::endl;
+  std::cout << "ADModelInput: [";
+  for (int i = 0; i < NInputs; i++) {
+    std::cout << ADModelInput[i] << ", ";
+  }
+  std::cout << "]" << std::endl;
+  // cout << "------------------ outputs -----------------" << std::endl;
+  // cout << "ADModelResult: [" << result;
+  // // for (int i = 0; i < result.size(); i++) {
+  // //   cout << result[i] << ", ";
+  // // }
+  // cout << "]" << std::endl;
+  // cout << "----------------------------------" << std::endl;
+  std::cout << "score: "<< score << std::endl;
+  std::cout << "thr: "<< objPar.minAXOL1TLThreshold << std::endl;
+  
   //return result
   return condResult;
 }
