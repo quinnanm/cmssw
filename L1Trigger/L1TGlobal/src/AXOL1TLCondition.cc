@@ -280,6 +280,7 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   // // }
   // cout << "]" << std::endl; 
   // cout << "----------------------------------" << std::endl;
+  std::cout << "loss: "<< loss << std::endl;
   std::cout << "score: "<< score << std::endl;
   std::cout << "thr: "<< objPar.minAXOL1TLThreshold << std::endl;
 
