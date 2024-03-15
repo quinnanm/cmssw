@@ -90,8 +90,10 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   int useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
 
   //HLS4ML stuff
-  std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion;  //loading from menu
-
+  // std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion;  //loading from menu
+  std::string AXOL1TLmodelversion = "L1Trigger/L1TGlobal/test/GTADModel_v3";
+  
+  
   std::cout<< "MODEL: "<< m_AXOL1TLmodelversion << std::endl;
 
   //if model version is empty, throw exception. Should not ever happen unless not found in menu
@@ -103,16 +105,15 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   hls4mlEmulator::ModelLoader loader(AXOL1TLmodelversion);
   std::shared_ptr<hls4mlEmulator::Model> model;
 
+  //load from precompiled binaries
   //model = loader.load_model();
+  
   try {
     model = loader.load_model();
   } catch (std::runtime_error& e) {
-    // edm::LogWarning("AXOL1TLCondition") << "ERROR: failed to load model version " << AXOL1TLmodelversion
-    //                                     << ". Not evaluating condition!" << std::endl;
-    // return false;
-    // for stopping with exception if model version cannot be loaded
     throw cms::Exception("ModelError") << " ERROR: failed to load model version " << AXOL1TLmodelversion << std::endl;
   }
+  
 
   std::cout << "FILLING AXO" <<std::endl;
 
@@ -273,13 +274,13 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
     std::cout << ADModelInput[i] << ", ";
   }
   std::cout << "]" << std::endl;
-  // cout << "------------------ outputs -----------------" << std::endl;
-  // cout << "ADModelResult: [" << result;
-  // // for (int i = 0; i < result.size(); i++) {
-  // //   cout << result[i] << ", ";
-  // // }
-  // cout << "]" << std::endl; 
-  // cout << "----------------------------------" << std::endl;
+  cout << "------------------ outputs -----------------" << std::endl;
+  cout << "ADModelResult: [";
+    for (const auto& element : result) {
+    std::cout << element << ", ";
+    }
+  cout << "]" << std::endl;
+  cout << "----------------------------------" << std::endl;
   std::cout << "score: "<< score << std::endl;
   std::cout << "thr: "<< objPar.minAXOL1TLThreshold << std::endl;
 
