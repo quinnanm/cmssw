@@ -90,11 +90,10 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   int useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
 
   //HLS4ML stuff
-  // std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion;  //loading from menu
-  std::string AXOL1TLmodelversion = "L1Trigger/L1TGlobal/test/GTADModel_v3";
+  std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion;  //loading from menu
+  // std::string AXOL1TLmodelversion = "L1Trigger/L1TGlobal/test/GTADModel_v3";
   
-  
-  std::cout<< "MODEL: "<< m_AXOL1TLmodelversion << std::endl;
+  std::cout<< "MODEL: "<< AXOL1TLmodelversion << std::endl;
 
   //if model version is empty, throw exception. Should not ever happen unless not found in menu
   if (AXOL1TLmodelversion == "" || AXOL1TLmodelversion == "GTADModel_") {
