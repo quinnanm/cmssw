@@ -91,8 +91,8 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   //HLS4ML stuff
   std::string AXOL1TLmodelversion = m_AXOL1TLmodelversion;  //loading from menu
-
-  std::cout<< "MODEL: "<< m_AXOL1TLmodelversion << std::endl;
+  // std::string AXOL1TLmodelversion = "L1Trigger/L1TGlobal/test/GTADModel_v3";
+  std::cout<< "MODEL: "<< AXOL1TLmodelversion << std::endl;
   
   //if model version is empty, throw exception. Should not ever happen
   if (AXOL1TLmodelversion == "" || AXOL1TLmodelversion == "GTADModel_") {
@@ -138,7 +138,7 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   typedef ap_ufixed<18, 14> losstype;
   typedef std::pair<resulttype, losstype> pairtype;
   // typedef std::array<ap_fixed<10, 7>, 13> resulttype;  //deprecated v1 type:
-
+  
   //define zero
   inputtype fillzero = 0.0;
 
@@ -270,15 +270,13 @@ td::endl;
     std::cout << ADModelInput[i] << ", ";
   }
   std::cout << "]" << std::endl;
-  // cout << "------------------ outputs -----------------" << std::endl;
-  // cout << "ADModelResult: [" << result;
-  //   for (const auto& element : result) {
-  //       // Assuming ap_fixed has a method to convert to a double or float for printing.
-  //       // If not, you will need to implement a way to convert or access its value.
-  //       std::cout << element.to_float() << ", "; // Using to_double() as an example.
-  //   }
-  // cout << "]" << std::endl;
-  // cout << "----------------------------------" << std::endl;
+  cout << "------------------ outputs -----------------" << std::endl;
+  cout << "ADModelResult: [";
+    for (const auto& element : result) {
+    std::cout << element << ", ";
+    }
+  cout << "]" << std::endl;
+  cout << "----------------------------------" << std::endl;
   std::cout << "loss: "<< loss << std::endl;
   std::cout << "score: "<< score << std::endl;
   std::cout << "thr: "<< objPar.minAXOL1TLThreshold << std::endl;
