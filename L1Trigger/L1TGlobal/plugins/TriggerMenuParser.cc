@@ -247,6 +247,9 @@ void l1t::TriggerMenuParser::parseCondFormats(const L1TUtmTriggerMenu* utmMenu) 
   m_triggerMenuInterface = utmMenu->getVersion();                     //BLW: correct descriptor?
   m_triggerMenuUUID = (getMmHashN(utmMenu->getName()) & 0xFFFFFFFF);  //make sure we only have 32 bits
 
+  std::cout << "MENU NAME: "<< m_triggerMenuName << std::endl;
+  std::cout << "MENU VERSION: "<< m_triggerMenuInterface  << std::endl << std::endl;
+
   const std::map<std::string, L1TUtmAlgorithm>& algoMap = utmMenu->getAlgorithmMap();
   const std::map<std::string, L1TUtmCondition>& condMap = utmMenu->getConditionMap();
   //We use es types for scale map to use auxiliary functions without having to duplicate code
@@ -324,6 +327,7 @@ void l1t::TriggerMenuParser::parseCondFormats(const L1TUtmTriggerMenu* utmMenu) 
           //parse AXOL1TL
         } else if (condition.getType() == esConditionType::Axol1tlTrigger ||
                    condition.getType() == esConditionType::AnomalyDetectionTrigger) {
+	  std::cout << "PARSE AXOL1TL" << std::endl;
           parseAXOL1TL(condition, chipNr);
 
           //parse Muons
@@ -2732,6 +2736,7 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
                                 << " type      = " << type << std::endl
                                 << " name      = " << name << std::endl;
 
+  std::cout << "---------------------------PARSE AXOL1TL---------------------------"<< std::endl;
   const int nrObj = 1;
   GtConditionType cType = TypeAXOL1TL;
 

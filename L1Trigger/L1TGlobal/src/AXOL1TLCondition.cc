@@ -255,6 +255,27 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   condResult |= passCondition;  //condresult true if passCondition true else it is false
 
+  //print output
+  std::cout << "AXOL1TLmodelversion: "<<AXOL1TLmodelversion<< std::endl;
+  std::cout << "------------------ Inputs (all elements)-----------------" << std::endl;
+  std::cout << "ADModelInput: [";
+  for (int i = 0; i < NInputs; i++) {
+    std::cout << ADModelInput[i] << ", ";
+  }
+  std::cout << "]" << std::endl;
+  cout << "------------------ outputs -----------------" << std::endl;
+  cout << "ADModelResult: [";
+    for (const auto& element : result) {
+    std::cout << element << ", ";
+    }
+  cout << "]" << std::endl;
+  cout << "----------------------------------" << std::endl;
+  std::cout << "loss: "<< loss << std::endl;
+  std::cout << "score: "<< score << std::endl;
+  std::cout << "thr: "<< objPar.minAXOL1TLThreshold << std::endl;
+  std::cout << "condResult: "<< condResult << std::endl;
+  
+  
   //return result
   return condResult;
 }
