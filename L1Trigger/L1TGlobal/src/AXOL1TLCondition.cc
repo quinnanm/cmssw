@@ -105,6 +105,16 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
                                        << m_model_loader.model_name() << "\".";
   }
 
+  std::cout<< "MODEL VERSION FROM MENU: "<< m_model_loader.model_name()<< "\".";
+  
+  //overwrite model:
+  std::string AXOL1TLmodelversion = "L1Trigger/L1TGlobal/test/GTADModel_v5";
+  hls4mlEmulator::ModelLoader loader(AXOL1TLmodelversion);
+  std::shared_ptr<hls4mlEmulator::Model> model;
+  model = loader.load_model();
+  
+  std::cout<< "MODEL: "<< AXOL1TLmodelversion << std::endl;
+
   bool condResult = false;
   int useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
 
@@ -130,8 +140,17 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   //types of inputs and outputs
   typedef ap_fixed<18, 13> inputtype;
-  typedef std::array<ap_fixed<10, 7, AP_RND_CONV, AP_SAT>, 8> resulttype;  //v3
+  if ((m_model_loader.model_name() == "GTADModel_v3") || (m_model_loader.model_name() == "GTADModel_v4")){
+    typedef std::array<ap_fixed<10, 7, AP_RND_CONV, AP_SAT>, 8> resulttype;  //v3, v4
+    std::cout<< "TYPE SET: v3/v4"<< std::endl;
+  }
+  else if (m_model_loader.model_name() == "GTADModel_v5") {
+    typedef ap_fixed<18, 14, AP_RND_CONV, AP_SAT> resulttype;  //v5 changes
+    std::cout<< "TYPE SET: v5" << std::endl;
+  }
+  typedef ap_fixed<18, 14, AP_RND_CONV, AP_SAT> resulttype;  //v5 changes 
   typedef ap_ufixed<18, 14> losstype;
+  
   typedef std::pair<resulttype, losstype> pairtype;
   // typedef std::array<ap_fixed<10, 7>, 13> resulttype;  //deprecated v1 type:
 
@@ -198,8 +217,8 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
       if (iMu < NMuons) {  //stop if fill the Nobjects we need
         MuInput[0 + (3 * iMu)] = ((candMuVec->at(useBx, iMu))->hwPt()) /
                                  2;  //index 0,3,6,9 //have to do hwPt/2 in order to match original et inputs
-        MuInput[1 + (3 * iMu)] = (candMuVec->at(useBx, iMu))->hwEta();  //index 1,4,7,10
-        MuInput[2 + (3 * iMu)] = (candMuVec->at(useBx, iMu))->hwPhi();  //index 2,5,8,11
+        MuInput[1 + (3 * iMu)] = (candMuVec->at(useBx, iMu))->hwEtaAtVtx();  //index 1,4,7,10
+        MuInput[2 + (3 * iMu)] = (candMuVec->at(useBx, iMu))->hwPhiAtVtx();  //index 2,5,8,11
       }
     }
   }
@@ -232,9 +251,13 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   }
 
   //now run the inference
-  m_model->prepare_input(ADModelInput);  //scaling internal here
-  m_model->predict();
-  m_model->read_result(&ADModelResult);  // this should be the square sum model result
+  model->prepare_input(ADModelInput);  //scaling internal here
+  model->predict();
+  model->read_result(&ADModelResult);  // this should be the square sum model result
+
+  // m_model->prepare_input(ADModelInput);  //scaling internal here
+  // m_model->predict();
+  // m_model->read_result(&ADModelResult);  // this should be the square sum model result
 
   result = ADModelResult.first;
   loss = ADModelResult.second;
@@ -260,6 +283,19 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   condResult |= passCondition;  //condresult true if passCondition true else it is false
 
+  std::cout << "------------------ Inputs (all elements)-----------------" << std::endl;
+  std::cout << "ADModelInput: [";
+  for (int i = 0; i < NInputs; i++) {
+    std::cout << ADModelInput[i] << ", ";
+  }
+  std::cout << "]" << std::endl;
+  cout << "------------------ outputs -----------------" << std::endl;
+  std::cout << "loss: "<< loss << std::endl;
+  std::cout << "result: "<< result << std::endl;
+  std::cout << "score: "<< score << std::endl;
+  std::cout << "thr: "<< objPar.minAXOL1TLThreshold << std::endl;
+
+  
   //return result
   return condResult;
 }
