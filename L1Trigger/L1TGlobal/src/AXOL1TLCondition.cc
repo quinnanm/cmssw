@@ -106,15 +106,14 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   }
 
   std::cout<< "MODEL VERSION FROM MENU: "<< m_model_loader.model_name()<< "\".";
-  
-  //overwrite model:
+
   std::string AXOL1TLmodelversion = "L1Trigger/L1TGlobal/test/GTADModel_v5";
   hls4mlEmulator::ModelLoader loader(AXOL1TLmodelversion);
   std::shared_ptr<hls4mlEmulator::Model> model;
   model = loader.load_model();
-  
-  std::cout<< "MODEL: "<< AXOL1TLmodelversion << std::endl;
 
+  std::cout<< "MODEL: "<< AXOL1TLmodelversion << std::endl;
+  
   bool condResult = false;
   int useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
 
@@ -140,19 +139,7 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   //types of inputs and outputs
   typedef ap_fixed<18, 13> inputtype;
-  if ((m_model_loader.model_name() == "GTADModel_v3") || (m_model_loader.model_name() == "GTADModel_v4")){
-    typedef std::array<ap_fixed<10, 7, AP_RND_CONV, AP_SAT>, 8> resulttype;  //v3, v4
-    std::cout<< "TYPE SET: v3/v4"<< std::endl;
-  }
-  else if (m_model_loader.model_name() == "GTADModel_v5") {
-    typedef ap_fixed<18, 14, AP_RND_CONV, AP_SAT> resulttype;  //v5 changes
-    std::cout<< "TYPE SET: v5" << std::endl;
-  }
-  typedef ap_fixed<18, 14, AP_RND_CONV, AP_SAT> resulttype;  //v5 changes 
   typedef ap_ufixed<18, 14> losstype;
-  
-  typedef std::pair<resulttype, losstype> pairtype;
-  // typedef std::array<ap_fixed<10, 7>, 13> resulttype;  //deprecated v1 type:
 
   //define zero
   inputtype fillzero = 0.0;
@@ -167,10 +154,10 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   inputtype EtSumInput[EtSumVecSize];
 
   //declare result vectors +score
-  resulttype result;
+  // resulttype result;
   losstype loss;
-  pairtype ADModelResult;  //model outputs a pair of the (result vector, loss)
-  float score = -1.0;      //not sure what the best default is hm??
+  // pairtype ADModelResult;  //model outputs a pair of the (result vector, loss)
+  float score = -1.0;  //not sure what the best default is hm??
 
   //check number of input objects we actually have (muons, jets etc)
   int NCandMu = candMuVec->size(useBx);
@@ -251,16 +238,22 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   }
 
   //now run the inference
-  model->prepare_input(ADModelInput);  //scaling internal here
-  model->predict();
-  model->read_result(&ADModelResult);  // this should be the square sum model result
-
-  // m_model->prepare_input(ADModelInput);  //scaling internal here
-  // m_model->predict();
+  m_model->prepare_input(ADModelInput);  //scaling internal here
+  m_model->predict();
   // m_model->read_result(&ADModelResult);  // this should be the square sum model result
-
-  result = ADModelResult.first;
-  loss = ADModelResult.second;
+  if ((m_model_loader.model_name() == "GTADModel_v3") ||
+      (m_model_loader.model_name() == "GTADModel_v4")) {  //v3/v4 overwrite
+    std::cout << "CHeCK: v4"<< std::endl;
+    using resulttype = std::array<ap_fixed<10, 7, AP_RND_CONV, AP_SAT>, 8>;
+    loss = readResult<resulttype, losstype>(*m_model);
+  } else {  //v5 default
+    std::cout << "CHeCK: v5"<< std::endl;
+    using resulttype = ap_fixed<18, 14, AP_RND_CONV, AP_SAT>;
+    loss = readResult<resulttype, losstype>(*m_model);
+  }
+  
+  // result = ADModelResult.first;
+  // loss = ADModelResult.second;
   score = ((loss).to_float()) * 16.0;  //scaling to match threshold
   //save score to class variable in case score saving needed
   setScore(score);
@@ -283,6 +276,7 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   condResult |= passCondition;  //condresult true if passCondition true else it is false
 
+
   std::cout << "------------------ Inputs (all elements)-----------------" << std::endl;
   std::cout << "ADModelInput: [";
   for (int i = 0; i < NInputs; i++) {
@@ -291,11 +285,9 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   std::cout << "]" << std::endl;
   cout << "------------------ outputs -----------------" << std::endl;
   std::cout << "loss: "<< loss << std::endl;
-  std::cout << "result: "<< result << std::endl;
   std::cout << "score: "<< score << std::endl;
   std::cout << "thr: "<< objPar.minAXOL1TLThreshold << std::endl;
 
-  
   //return result
   return condResult;
 }
