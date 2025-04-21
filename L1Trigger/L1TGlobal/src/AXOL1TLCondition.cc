@@ -115,6 +115,13 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
                                        << m_model_loader.model_name() << "\".";
   }
 
+  //overwrite loaded model with test binaries
+  std::string AXOL1TLmodelversion = "L1Trigger/L1TGlobal/test/GTADModel_v5"; 
+  hls4mlEmulator::ModelLoader loader_overwrite(AXOL1TLmodelversion);
+  std::shared_ptr<hls4mlEmulator::Model> m_model_overwrite;
+  m_model_overwrite = loader_overwrite.load_model();
+  std::cout << "loading model overwrite... " << AXOL1TLmodelversion << std::endl;
+  
   bool condResult = false;
   int useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
 
@@ -160,6 +167,10 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   // pairtype ADModelResult;  //model outputs a pair of the (result vector, loss)
   float score = -1.0;  //not sure what the best default is hm??
 
+  //v5 timing fix overwrite
+  losstype loss_overwrite;
+  float score_overwrite = -1.0; 
+  
   //check number of input objects we actually have (muons, jets etc)
   int NCandMu = candMuVec->size(useBx);
   int NCandJet = candJetVec->size(useBx);
@@ -241,6 +252,10 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   //now run the inference
   m_model->prepare_input(ADModelInput);  //scaling internal here
   m_model->predict();
+
+  m_model_overwrite->prepare_input(ADModelInput);
+  m_model_overwrite->predict();
+  
   // m_model->read_result(&ADModelResult);  // this should be the square sum model result
   if ((m_model_loader.model_name() == "GTADModel_v3") ||
       (m_model_loader.model_name() == "GTADModel_v4")) {  //v3/v4 overwrite
@@ -249,11 +264,14 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   } else {  //v5 default
     using resulttype = ap_fixed<18, 14, AP_RND_CONV, AP_SAT>;
     loss = readResult<resulttype, losstype>(*m_model);
+    loss_overwrite = readResult<resulttype, losstype>(*m_model_overwrite);
+    std::cout << "computing loss for v5 and v5 overwrite... "<< std::endl;
   }
 
   // result = ADModelResult.first;
   // loss = ADModelResult.second;
   score = ((loss).to_float()) * 16.0;  //scaling to match threshold
+  score_overwrite = ((loss_overwrite).to_float()) * 16.0;  
   //save score to class variable in case score saving needed
   setScore(score);
 
@@ -274,6 +292,22 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   passCondition = checkCut(objPar.minAXOL1TLThreshold, score, condGEqVal);
 
   condResult |= passCondition;  //condresult true if passCondition true else it is false
+
+  //printouts
+  cout << "------------------ Inputs (all elements)-----------------" << std::endl;
+  cout << "ADModelInput: [";
+  for (int i = 0; i < NInputs; i++) {
+    cout << ADModelInput[i] << ", ";
+  }
+  cout << "]" << std::endl;
+
+  cout << "------------------ outputs -----------------" << std::endl;
+  cout << "original v5 loss: " << loss << std::endl;
+  cout << "original v5 score (loss*16) :" << score << std::endl;
+  cout << "timing fix v5 loss: " << loss_overwrite << std::endl;
+  cout << "timing fix v5 score (loss*16) :" << score_overwrite << std::endl;
+  cout << "Threshold: " << objPar.minAXOL1TLThreshold << std::endl;
+  cout << "----------------------------------" << std::endl;
 
   //return result
   return condResult;
