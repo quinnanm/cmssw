@@ -273,7 +273,8 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   score = ((loss).to_float()) * 16.0;  //scaling to match threshold
   score_overwrite = ((loss_overwrite).to_float()) * 16.0;  
   //save score to class variable in case score saving needed
-  setScore(score);
+  // setScore(score);
+  setScore(score_overwrite);
 
   //number of objects/thrsholds to check
   int iCondition = 0;  // number of conditions: there is only one
@@ -289,11 +290,12 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   bool condGEqVal = m_gtAXOL1TLTemplate->condGEq();
   bool passCondition = false;
 
-  passCondition = checkCut(objPar.minAXOL1TLThreshold, score, condGEqVal);
+  // passCondition = checkCut(objPar.minAXOL1TLThreshold, score, condGEqVal);
+  passCondition = checkCut(objPar.minAXOL1TLThreshold, score_overwrite, condGEqVal); //new model use new model
 
   condResult |= passCondition;  //condresult true if passCondition true else it is false
 
-  //printouts
+  //printouts, comment out if desired
   cout << "------------------ Inputs (all elements)-----------------" << std::endl;
   cout << "ADModelInput: [";
   for (int i = 0; i < NInputs; i++) {
