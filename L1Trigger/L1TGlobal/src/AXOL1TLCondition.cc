@@ -116,7 +116,7 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   }
 
   //overwrite loaded model with test binaries
-  std::string AXOL1TLmodelversion = "L1Trigger/L1TGlobal/test/GTADModel_v5"; 
+  std::string AXOL1TLmodelversion = "test/GTADModel_v5"; 
   hls4mlEmulator::ModelLoader loader_overwrite(AXOL1TLmodelversion);
   std::shared_ptr<hls4mlEmulator::Model> m_model_overwrite;
   m_model_overwrite = loader_overwrite.load_model();
