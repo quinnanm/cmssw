@@ -10,33 +10,33 @@ stage2L1Trigger.toModify(None, lambda x:
     print("# L1T INFO:  L1REPACK:CalouGT (intended for 2016/2017 data), reemulates the Calo part, uses unpacked Muons, and reemulates uGT."))
 
 # First, Unpack all inputs to L1:
-# import EventFilter.L1TRawToDigi.bmtfDigis_cfi
-# unpackBmtf = EventFilter.L1TRawToDigi.bmtfDigis_cfi.bmtfDigis.clone(
-#     InputLabel = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
+import EventFilter.L1TRawToDigi.bmtfDigis_cfi
+unpackBmtf = EventFilter.L1TRawToDigi.bmtfDigis_cfi.bmtfDigis.clone(
+    InputLabel = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
 
-# import EventFilter.DTTFRawToDigi.dttfunpacker_cfi
-# unpackDttf = EventFilter.DTTFRawToDigi.dttfunpacker_cfi.dttfunpacker.clone(
-#     DTTF_FED_Source = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
+import EventFilter.DTTFRawToDigi.dttfunpacker_cfi
+unpackDttf = EventFilter.DTTFRawToDigi.dttfunpacker_cfi.dttfunpacker.clone(
+    DTTF_FED_Source = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
         
-# import EventFilter.L1TRawToDigi.emtfStage2Digis_cfi
-# unpackEmtf = EventFilter.L1TRawToDigi.emtfStage2Digis_cfi.emtfStage2Digis.clone(
-#     InputLabel = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
+import EventFilter.L1TRawToDigi.emtfStage2Digis_cfi
+unpackEmtf = EventFilter.L1TRawToDigi.emtfStage2Digis_cfi.emtfStage2Digis.clone(
+    InputLabel = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
         
-# import EventFilter.CSCTFRawToDigi.csctfunpacker_cfi
-# unpackCsctf = EventFilter.CSCTFRawToDigi.csctfunpacker_cfi.csctfunpacker.clone(
-#     producer = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
+import EventFilter.CSCTFRawToDigi.csctfunpacker_cfi
+unpackCsctf = EventFilter.CSCTFRawToDigi.csctfunpacker_cfi.csctfunpacker.clone(
+    producer = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
 
-# import EventFilter.CSCRawToDigi.cscUnpacker_cfi
-# unpackCSC = EventFilter.CSCRawToDigi.cscUnpacker_cfi.muonCSCDigis.clone(
-#     InputObjects = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
+import EventFilter.CSCRawToDigi.cscUnpacker_cfi
+unpackCSC = EventFilter.CSCRawToDigi.cscUnpacker_cfi.muonCSCDigis.clone(
+    InputObjects = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
 
-# import EventFilter.DTRawToDigi.dtunpacker_cfi
-# unpackDT = EventFilter.DTRawToDigi.dtunpacker_cfi.muonDTDigis.clone(
-#     inputLabel = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
+import EventFilter.DTRawToDigi.dtunpacker_cfi
+unpackDT = EventFilter.DTRawToDigi.dtunpacker_cfi.muonDTDigis.clone(
+    inputLabel = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
 
-# import EventFilter.RPCRawToDigi.rpcUnpacker_cfi
-# unpackRPC = EventFilter.RPCRawToDigi.rpcUnpacker_cfi.rpcunpacker.clone(
-#     InputLabel = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
+import EventFilter.RPCRawToDigi.rpcUnpacker_cfi
+unpackRPC = EventFilter.RPCRawToDigi.rpcUnpacker_cfi.rpcunpacker.clone(
+    InputLabel = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
 
 import EventFilter.EcalRawToDigi.EcalUnpackerData_cfi
 unpackEcal = EventFilter.EcalRawToDigi.EcalUnpackerData_cfi.ecalEBunpacker.clone(
@@ -86,7 +86,10 @@ cutlist = [
     'simOmtfDigis',
     'simEmtfDigis',
     'simRpcTriggerPrimitiveDigis',
-    'simGmtStage2Digis'
+    'simGmtStage2Digis',
+    'simMuonGEMDigis',
+    'simMuonGEMPadDigis',
+    'simMuonGEMPadDigiClusters'
 ]
 for b in cutlist:
     SimL1EmulatorCore.remove(b)
@@ -131,7 +134,16 @@ rawDataCollector = EventFilter.RawDataCollector.rawDataCollectorByLabel_cfi.rawD
 
 
 SimL1EmulatorTask = cms.Task()
-stage2L1Trigger.toReplaceWith(SimL1EmulatorTask, cms.Task(unpackEcal,unpackHcal,unpackGtStage2
-                                 ,SimL1EmulatorCoreTask,packCaloStage2
-                                 ,packGtStage2,rawDataCollector))
+stage2L1Trigger.toReplaceWith(SimL1EmulatorTask, cms.Task(
+    unpackEcal,
+    unpackHcal,
+    unpackGtStage2,
+    unpackBmtf,
+    unpackEmtf,
+    unpackCsctf,
+    unpackRPC,
+    SimL1EmulatorCoreTask,
+    packCaloStage2,
+    packGtStage2,
+    rawDataCollector))
 SimL1Emulator = cms.Sequence(SimL1EmulatorTask)
