@@ -122,12 +122,17 @@ simCaloStage2Layer1Digis.hcalToken = 'unpackHcal'
 
 # uGT inputs for Muons are from unpacked
 simGtStage2Digis.MuonInputTag   = "unpackGtStage2:Muon"
+simGtStage2Digis.MuonShowerInputTag = cms.InputTag("")
 
 # Finally, pack the newly re-emulated L1T parts back into RAW
 # Calo packer
 from EventFilter.L1TRawToDigi.caloStage2Raw_cfi import caloStage2Raw as packCaloStage2
 # uGT packer
 from EventFilter.L1TRawToDigi.gtStage2Raw_cfi import gtStage2Raw as packGtStage2
+#use unpacked muons
+packGtStage2.MuonInputTag = cms.InputTag("unpackGtStage2:Muon")
+# packGtStage2.MuonShowerInputTag = cms.InputTag("unpackGtStage2:MuonShower")
+#simGtStage2Digis.ProduceMuonShower = cms.bool(False)
 
 # combine the new L1 RAW with existing RAW for other FEDs
 import EventFilter.RawDataCollector.rawDataCollectorByLabel_cfi
@@ -156,6 +161,7 @@ stage2L1Trigger.toReplaceWith(SimL1EmulatorTask, cms.Task(
     rawDataCollector))
 SimL1Emulator = cms.Sequence(SimL1EmulatorTask)
 
-print("Modules in SimL1EmulatorCoreTask:")
-for m in SimL1EmulatorCoreTask.moduleLabels():
-    print(" -", m)
+print("simGtStage2Digis configured with:")
+print(" - MuonInputTag:", simGtStage2Digis.MuonInputTag)
+if hasattr(simGtStage2Digis, "MuonShowerInputTag"):
+    print(" - MuonShowerInputTag:", simGtStage2Digis.MuonShowerInputTag)
