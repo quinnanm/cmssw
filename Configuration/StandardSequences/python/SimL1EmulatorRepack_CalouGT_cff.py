@@ -5,9 +5,9 @@ import FWCore.ParameterSet.Config as cms
 from Configuration.Eras.Modifier_stage2L1Trigger_cff import stage2L1Trigger
 
 (~stage2L1Trigger).toModify(None, lambda x:
-    print("# L1T WARN:  L1REPACK:CalouGT (intended for 2016/2017 data) only supports Stage 2 eras for now.\n# L1T WARN:  Use a legacy version of L1REPACK for now."))
+    print("# L1T WARN: MODIFIED L1REPACK:CalouGT (intended for 2016/2017 data) only supports Stage 2 eras for now.\n# L1T WARN:  Use a legacy version of L1REPACK for now."))
 stage2L1Trigger.toModify(None, lambda x:
-    print("# L1T INFO:  L1REPACK:CalouGT (intended for 2016/2017 data), reemulates the Calo part, uses unpacked Muons, and reemulates uGT."))
+    print("# L1T INFO: MODIFIED  L1REPACK:CalouGT (intended for 2016/2017 data), reemulates the Calo part, uses unpacked Muons, and reemulates uGT."))
 
 # First, Unpack all inputs to L1:
 import EventFilter.L1TRawToDigi.bmtfDigis_cfi
@@ -66,7 +66,15 @@ simHcalTriggerPrimitiveDigis.inputUpgradeLabel = [
 ]
 
 from L1Trigger.Configuration.SimL1Emulator_cff import *
-    
+
+# Define a custom emulator core task with only calo + GT re-emulation
+SimL1EmulatorCoreTask = cms.Task(
+    simHcalTriggerPrimitiveDigis,
+    simCaloStage2Layer1Digis,
+    simCaloStage2Digis,
+    simGtStage2Digis
+)
+
 # simDtTriggerPrimitiveDigis.digiTag = 'unpackDT'
 # simCscTriggerPrimitiveDigis.CSCComparatorDigiProducer = 'unpackCSC:MuonCSCComparatorDigi'
 # simCscTriggerPrimitiveDigis.CSCWireDigiProducer       = 'unpackCSC:MuonCSCWireDigi'
@@ -78,21 +86,21 @@ from L1Trigger.Configuration.SimL1Emulator_cff import *
 # -----------------------------------------------------------
 # change when availalbe simTwinMux and reliable DTTPs, CSCTPs
 # cutlist=['simDtTriggerPrimitiveDigis','simCscTriggerPrimitiveDigis','simTwinMuxDigis']
-cutlist = [
-    'simDtTriggerPrimitiveDigis',
-    'simCscTriggerPrimitiveDigis',
-    'simTwinMuxDigis',
-    'simBmtfDigis',
-    'simOmtfDigis',
-    'simEmtfDigis',
-    'simRpcTriggerPrimitiveDigis',
-    'simGmtStage2Digis',
-    'simMuonGEMDigis',
-    'simMuonGEMPadDigis',
-    'simMuonGEMPadDigiClusters'
-]
-for b in cutlist:
-    SimL1EmulatorCore.remove(b)
+# cutlist = [
+#     'simDtTriggerPrimitiveDigis',
+#     'simCscTriggerPrimitiveDigis',
+#     'simTwinMuxDigis',
+#     'simBmtfDigis',
+#     'simOmtfDigis',
+#     'simEmtfDigis',
+#     'simRpcTriggerPrimitiveDigis',
+#     'simGmtStage2Digis',
+#     'simMuonGEMDigis',
+#     'simMuonGEMPadDigis',
+#     'simMuonGEMPadDigiClusters'
+# ]
+# for b in cutlist:
+#     SimL1EmulatorCore.remove(b)
 # -----------------------------------------------------------
 
 # BMTF
@@ -113,7 +121,7 @@ simCaloStage2Layer1Digis.ecalToken = 'unpackEcal:EcalTriggerPrimitives'
 simCaloStage2Layer1Digis.hcalToken = 'unpackHcal'
 
 # uGT inputs for Muons are from unpacked
-# simGtStage2Digis.MuonInputTag   = "unpackGtStage2:Muon"
+simGtStage2Digis.MuonInputTag   = "unpackGtStage2:Muon"
 
 # Finally, pack the newly re-emulated L1T parts back into RAW
 # Calo packer
@@ -147,3 +155,7 @@ stage2L1Trigger.toReplaceWith(SimL1EmulatorTask, cms.Task(
     packGtStage2,
     rawDataCollector))
 SimL1Emulator = cms.Sequence(SimL1EmulatorTask)
+
+print("Modules in SimL1EmulatorCoreTask:")
+for m in SimL1EmulatorCoreTask.moduleLabels():
+    print(" -", m)
