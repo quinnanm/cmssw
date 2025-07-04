@@ -115,6 +115,15 @@ const bool l1t::TOPOCondition::evaluateCondition(const int bxEval) const {
                                        << m_model_loader.model_name() << "\".";
   }
 
+  std::cout << "Overwriting topo model loading..." << m_model_loader.model_name() <<std::endl;
+
+  std::string TOPOmodelversion = "L1Trigger/L1TGlobal/test/topo_v1";
+  hls4mlEmulator::ModelLoader loader(TOPOmodelversion);
+  std::shared_ptr<hls4mlEmulator::Model> m_model;
+  m_model = loader.load_model();
+  std::cout << "loading model... " << TOPOmodelversion << std::endl;
+
+  
   std::cout << "#### evaluate topo condition ####" << std::endl;
 
   bool condResult = false;
@@ -145,16 +154,16 @@ const bool l1t::TOPOCondition::evaluateCondition(const int bxEval) const {
   //total # inputs in vector is (4+10+4+1)*3 = 57
   const int NInputs = MuVecSize + JVecSize + EGVecSize + EtSumVecSize;  //so 21
 
-  //types of inputs and outputs
-  typedef ap_fixed<18, 13> inputtype;
-  typedef ap_ufixed<18, 14> losstype;
+  //types of inputs and outputs modified for topo
+  typedef ap_fixed<16, 6> inputtype;
+  typedef ap_ufixed<16, 6> losstype;
 
   //define zero
   inputtype fillzero = 0.0;
 
   //AD vector declaration, will fill later
   inputtype ADModelInput[NInputs] = {};
-
+  
   //initializing vector by type for my sanity
   inputtype MuInput[MuVecSize];
   inputtype JetInput[JVecSize];
@@ -245,18 +254,9 @@ const bool l1t::TOPOCondition::evaluateCondition(const int bxEval) const {
   //now run the inference
   m_model->prepare_input(ADModelInput);  //scaling internal here
   m_model->predict();
-  // m_model->read_result(&ADModelResult);  // this should be the square sum model result
-  if ((m_model_loader.model_name() == "GTADModel_v3") ||
-      (m_model_loader.model_name() == "GTADModel_v4")) {  //v3/v4 overwrite
-    using resulttype = std::array<ap_fixed<10, 7, AP_RND_CONV, AP_SAT>, 8>;
-    loss = readResult<resulttype, losstype>(*m_model);
-  } else {  //v5 default
-    using resulttype = ap_fixed<18, 14, AP_RND_CONV, AP_SAT>;
-    loss = readResult<resulttype, losstype>(*m_model);
-  }
-
-  // result = ADModelResult.first;
-  // loss = ADModelResult.second;
+  m_model->read_result(&loss); //store result as loss variable
+    
+  //CHECK: I'm not sure if topo needs this or not
   score = ((loss).to_float()) * 16.0;  //scaling to match threshold
   //save score to class variable in case score saving needed
   setScore(score);
@@ -279,6 +279,21 @@ const bool l1t::TOPOCondition::evaluateCondition(const int bxEval) const {
 
   condResult |= passCondition;  //condresult true if passCondition true else it is false
 
+  cout << "------------------ Inputs (all elements)-----------------" << std::endl;
+  cout << "ADModelInput: [";
+  for (int i = 0; i < NInputs; i++) {
+    cout << ADModelInput[i] << ", ";
+  }
+  cout << "]" << std::endl;
+
+  cout << "------------------ outputs -----------------" << std::endl;
+  cout << "loss: " << loss << std::endl;
+  cout << "score (loss*16) :" << score << std::endl;
+  cout << "Threshold: " << objPar.minTOPOThreshold << std::endl;
+  cout << "condResult: " << condResult << std::endl;
+  cout << "----------------------------------" << std::endl;
+
+  
   //return result
   return condResult;
 }
