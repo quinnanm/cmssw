@@ -524,6 +524,7 @@ void l1t::GlobalBoard::fillAXOScore(int iBxInEvent, std::unique_ptr<AXOL1TLScore
   float scorevalue = 0.0;
   if (iBxInEvent == 0) {
     scorevalue = m_storedAXOScore;
+    std::cout<<"AXO SCORE "<< m_storedAXOScore<<std::endl;
   }
 
   //set dataformat value
@@ -645,7 +646,7 @@ void l1t::GlobalBoard::initTriggerConditions(const edm::EventSetup& evSetup,
           theCondition = std::make_unique<AXOL1TLCondition>(itCond.second, this);
           theCondition->setVerbosity(m_verbosity);
 
-          if (m_saveAXOScore and not m_axoScoreConditionName.empty()) {
+          if (m_saveAXOScore && m_axoScoreConditionName.empty()) {
             m_axoScoreConditionName = itCond.first;
           }
 
@@ -922,10 +923,16 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
 
       // for optional software-only saving of axol1tl score
       // m_storedAXOScore < 0.0 ensures this gets set only once per condition if score not default of -999
-      if (m_saveAXOScore and m_storedAXOScore < 0 and cond.first == m_axoScoreConditionName and
-          not m_axoScoreConditionName.empty()) {
-        auto const* theCondition = dynamic_cast<AXOL1TLCondition*>(cond.second.get());
-        m_storedAXOScore = theCondition->getScore();
+      // if (m_saveAXOScore and m_storedAXOScore < 0 and cond.first == m_axoScoreConditionName and
+      //     not m_axoScoreConditionName.empty()) {
+      //   auto const* theCondition = dynamic_cast<AXOL1TLCondition*>(cond.second.get());
+      //   m_storedAXOScore = theCondition->getScore();
+      // }
+      if (m_saveAXOScore && iBxInEvent == 0 && m_storedAXOScore == -999.f) {
+	if (auto const* axoCond = dynamic_cast<AXOL1TLCondition*>(cond.second.get())) {
+	  m_storedAXOScore = axoCond->getScore();
+	  std::cout<<"setscore "<<m_storedAXOScore<<std::endl;
+	}
       }
     }
   }

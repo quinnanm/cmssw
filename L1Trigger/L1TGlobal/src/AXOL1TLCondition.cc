@@ -40,7 +40,7 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/MessageLogger/interface/MessageDrop.h"
-
+#include "FWCore/ParameterSet/interface/FileInPath.h"
 namespace {
   //template function for reading results
   template <typename ResultType, typename LossType>
@@ -115,6 +115,18 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
                                        << m_model_loader.model_name() << "\".";
   }
 
+  std::cout << "loaded model from menu: "<<m_model_loader.model_name()<<std::endl;
+  
+  //overwrite loaded model with test binaries
+  //std::string AXOL1TLmodelversion = "test/GTADModel_v6"; //can also check against v5 if desired, binary there
+  auto fip = edm::FileInPath("L1Trigger/L1TGlobal/data/AXOL1TL/GTADModel_v6.so");
+  std::string AXOL1TLmodelversion = fip.fullPath();
+  AXOL1TLmodelversion.erase(AXOL1TLmodelversion.size()-3); // remove ".so"
+  hls4mlEmulator::ModelLoader loader_overwrite(AXOL1TLmodelversion);
+  std::shared_ptr<hls4mlEmulator::Model> m_model_overwrite;
+  m_model_overwrite = loader_overwrite.load_model();
+  std::cout << "loading model overwrite from precompiled binaries... " << AXOL1TLmodelversion << std::endl;
+  
   bool condResult = false;
   int useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
 
@@ -160,6 +172,10 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   // pairtype ADModelResult;  //model outputs a pair of the (result vector, loss)
   float score = -1.0;  //not sure what the best default is hm??
 
+  //for checking model binaries
+  losstype loss_overwrite;
+  float score_overwrite = -1.0; 
+  
   //check number of input objects we actually have (muons, jets etc)
   int NCandMu = candMuVec->size(useBx);
   int NCandJet = candJetVec->size(useBx);
@@ -241,6 +257,10 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   //now run the inference
   m_model->prepare_input(ADModelInput);  //scaling internal here
   m_model->predict();
+
+  m_model_overwrite->prepare_input(ADModelInput);
+  m_model_overwrite->predict();
+  
   // m_model->read_result(&ADModelResult);  // this should be the square sum model result
   if ((m_model_loader.model_name() == "GTADModel_v3") ||
       (m_model_loader.model_name() == "GTADModel_v4")) {  //v3/v4 overwrite
@@ -249,13 +269,18 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   } else {  //v5 default
     using resulttype = ap_fixed<18, 14, AP_RND_CONV, AP_SAT>;
     loss = readResult<resulttype, losstype>(*m_model);
+    loss_overwrite = readResult<resulttype, losstype>(*m_model_overwrite);
   }
+
+  std::cout << "computing loss for default menu model and precompiled binary model overwrite... "<< std::endl;
 
   // result = ADModelResult.first;
   // loss = ADModelResult.second;
   score = ((loss).to_float()) * 16.0;  //scaling to match threshold
+  score_overwrite = ((loss_overwrite).to_float()) * 16.0;  
+
   //save score to class variable in case score saving needed
-  setScore(score);
+  setScore(score); //score set to score from menu
 
   //number of objects/thrsholds to check
   int iCondition = 0;  // number of conditions: there is only one
@@ -275,6 +300,23 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   condResult |= passCondition;  //condresult true if passCondition true else it is false
 
+  //printouts, comment out if desired
+  cout << "------------------ Inputs (all elements)-----------------" << std::endl;
+  cout << "ADModelInput: [";
+  for (int i = 0; i < NInputs; i++) {
+    cout << ADModelInput[i] << ", ";
+  }
+  cout << "]" << std::endl;
+
+  cout << "------------------ outputs -----------------" << std::endl;
+  cout << "menu model loss: " << loss << std::endl;
+  cout << "menu model score (loss*16) :" << score << std::endl;
+  cout << "overwrite loss: " << loss_overwrite << std::endl;
+  cout << "overwrite score (loss*16) :" << score_overwrite << std::endl;
+  cout << "Threshold: " << objPar.minAXOL1TLThreshold << std::endl;
+  cout << "----------------------------------" << std::endl;
+
+  
   //return result
   return condResult;
 }
