@@ -50,9 +50,19 @@ import EventFilter.RPCRawToDigi.rpcUnpacker_cfi
 unpackRPC = EventFilter.RPCRawToDigi.rpcUnpacker_cfi.rpcunpacker.clone(
     InputLabel = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
 
+###fixes following issue #47925 -> use RPCDigiMerger instead of RPCUnpackingModule
+#import EventFilter.RPCRawToDigi.rpcUnpacker_cfi
+#unpackRPC = EventFilter.RPCRawToDigi.rpcUnpacker_cfi.rpcunpacker.clone(
+#    InputLabel = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
+
 import EventFilter.RPCRawToDigi.rpcTwinMuxRawToDigi_cfi
 unpackRPCTwinMux = EventFilter.RPCRawToDigi.rpcTwinMuxRawToDigi_cfi.rpcTwinMuxRawToDigi.clone(
     inputTag = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
+
+import EventFilter.RPCRawToDigi.RPCCPPFRawToDigi_cfi
+unpackCPPF = EventFilter.RPCRawToDigi.RPCCPPFRawToDigi_cfi.rpcCPPFRawToDigi.clone(
+    inputTag = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
+###
 
 import EventFilter.L1TXRawToDigi.twinMuxStage2Digis_cfi
 unpackTwinMux = EventFilter.L1TXRawToDigi.twinMuxStage2Digis_cfi.twinMuxStage2Digis.clone(
@@ -69,6 +79,14 @@ unpackEcal = EventFilter.EcalRawToDigi.EcalUnpackerData_cfi.ecalEBunpacker.clone
 import EventFilter.HcalRawToDigi.HcalRawToDigi_cfi
 unpackHcal = EventFilter.HcalRawToDigi.HcalRawToDigi_cfi.hcalDigis.clone(
     InputLabel = cms.InputTag( 'rawDataCollector', processName=cms.InputTag.skipCurrentProcess()))
+
+###fixes following issue #47925 -> use RPCDigiMerger instead of RPCUnpackingModule
+from EventFilter.RPCRawToDigi.RPCDigiMerger import RPCDigiMerger
+unpackRPC = RPCDigiMerger(
+    inputTagTwinMuxDigis = cms.InputTag('unpackRPCTwinMux'),
+    inputTagOMTFDigis    = cms.InputTag('unpackOmtf'),
+    inputTagCPPFDigis    = cms.InputTag('unpackCPPF'),
+)###
 
 # Second, Re-Emulate the entire L1T
 
@@ -131,7 +149,9 @@ simEmtfDigis.CSCInput            = "unpackEmtf"
 simEmtfDigis.RPCInput            = 'unpackRPC'
 simEmtfDigis.CPPFInput           = cms.InputTag('unpackEmtf')
 simEmtfDigis.GEMEnable           = cms.bool(False)
-simEmtfDigis.GEMInput            = cms.InputTag('unpackGEM')
+#fixes following issue #47925: -> use emtfStage2Digis not unpackGEM
+#simEmtfDigis.GEMInput            = cms.InputTag('unpackGEM')
+simEmtfDigis.GEMInput = cms.InputTag('unpackEmtf')###
 simEmtfDigis.CPPFEnable          = cms.bool(True)
 
 # Calo Layer-1
@@ -168,7 +188,9 @@ rawDataCollector = EventFilter.RawDataCollector.rawDataCollectorByLabel_cfi.rawD
     )
 
 SimL1EmulatorTask = cms.Task()
-stage2L1Trigger.toReplaceWith(SimL1EmulatorTask, cms.Task(unpackEcal,unpackHcal,unpackCSC,unpackDT,unpackRPC,unpackRPCTwinMux,unpackTwinMux,unpackOmtf,unpackEmtf,unpackCsctf,unpackBmtf
+#fixes following issue #47925: -> use RPCDigiMerger instead of RPCUnpackingModule
+#stage2L1Trigger.toReplaceWith(SimL1EmulatorTask, cms.Task(unpackEcal,unpackHcal,unpackCSC,unpackDT,unpackRPC,unpackRPCTwinMux,unpackTwinMux,unpackOmtf,unpackEmtf,unpackCsctf,unpackBmtf
+stage2L1Trigger.toReplaceWith(SimL1EmulatorTask, cms.Task(unpackEcal,unpackHcal,unpackCSC,unpackDT,unpackRPC,unpackRPCTwinMux,unpackCPPF,unpackTwinMux,unpackOmtf,unpackEmtf,unpackCsctf,unpackBmtf
                                                           ,unpackTcds
                                                           ,SimL1EmulatorCoreTask,packCaloStage2
                                                           ,packGmtStage2,packGtStage2,rawDataCollector))
