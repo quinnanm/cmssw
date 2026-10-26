@@ -4,3 +4,14 @@
     <use name="NNPuppiTauModel"/>
     <use name="cppunit"/>
 </bin>
+
+<bin name="testAlkaidModels" file="testAlkaidModels.cc,test_catch2_main.cc">
+    <use name="alkaid"/>
+    <use name="catch2"/>
+    <use name="hls"/>
+    <use name="hls4mlEmulatorExtras"/>
+    <use name="FWCore/ParameterSet"/>
+    <use name="FWCore/Utilities"/>
+    <use name="L1Trigger/Phase2L1ParticleFlow"/>
+</bin>
+

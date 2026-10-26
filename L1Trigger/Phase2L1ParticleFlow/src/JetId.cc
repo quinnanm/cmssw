@@ -74,11 +74,11 @@ float JetId::EvaluateNN() {
 }  //end EvaluateNN
 
 ap_fixed<14, 8, AP_TRN, AP_SAT, 0> JetId::EvaluateNNFixed() {
-  ap_fixed<12, 6, AP_TRN, AP_SAT, 0> modelInput[130] = {};
+  NNInputType modelInput[kNNInputs] = {};
   for (unsigned int i = 0; i < NNvectorVar_.size(); i++) {
     modelInput[i] = NNvectorVar_[i];
   }
-  ap_fixed<14, 8, AP_TRN, AP_SAT, 0> modelResult[1] = {-1};
+  NNOutputType modelResult[1] = {-1};
 
   modelRef_->prepare_input(modelInput);
   modelRef_->predict();

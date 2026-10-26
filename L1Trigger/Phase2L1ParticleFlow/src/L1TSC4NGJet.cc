@@ -1,21 +1,80 @@
 #include "L1Trigger/Phase2L1ParticleFlow/interface/L1TSC4NGJetID.h"
+#include "L1Trigger/Phase2L1ParticleFlow/interface/AlkaidModel.h"
 #include "L1Trigger/Phase2L1ParticleFlow/interface/common/inversion.h"
 #include "L1Trigger/Phase2L1ParticleFlow/interface/common/log.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include <algorithm>
+#include <any>
+#include <cmath>
+#include <utility>
 
 using namespace L1TSC4NGJet;
 
-struct ModelInputs {
-  inputtype* candidate_inputs;
-  inputtype* jet_inputs;
-  int total_candidate_inputs;
-  int total_jet_inputs;
-};
+namespace {
 
-struct ModelOutputs {
-  inputtype* jet_class_output;
-  inputtype* jet_regression_output;
-};
+  // alkaid replacement for the hls4ml emulator of L1TSC4NGJetModel_v2_0_0, with the same ModelInputs/ModelOutputs
+  // interface. Inputs pass through double, which is exact for values with at most 53 significant bits, and the ALIR
+  // model reproduces hls4ml for |x| < kInputLimit (2^29: it models the ap_fixed<64,32,AP_RND,AP_SAT> input as
+  // ap_fixed<62,30,AP_RND,AP_WRAP> to fit 64-bit arithmetic). Both are checked for every input: outside that domain
+  // the result could differ from hls4ml, so it throws instead.
+  // Unlike the hls4ml wrapper, which writes all kModelClassOutputs (9) class scores into the caller's
+  // N_class_outputs (8) array, it writes only the N_class_outputs scores the caller has room for.
+  class AlkaidEmulator : public hls4mlEmulator::Model {
+  public:
+    static constexpr double kInputLimit = 536870912.;  // 2^29
+
+    explicit AlkaidEmulator(std::shared_ptr<const l1tpf::AlkaidModel> model)
+        : model_(std::move(model)), inputs_(L1TSC4NGJetID::kAlkaidInputs), outputs_(L1TSC4NGJetID::kAlkaidOutputs) {}
+
+    void prepare_input(std::any input) override {
+      const auto modelInputs = std::any_cast<ModelInputs>(input);
+      // The ALIR model's flat input assumes the candidate stride and jet input count EvaluateNNFixed uses.
+      if (modelInputs.total_candidate_inputs != L1TSC4NGJetID::N_candidate_features ||
+          modelInputs.total_jet_inputs != L1TSC4NGJetID::N_jet_inputs)
+        throw cms::Exception("L1TSC4NGJetID")
+            << "alkaid emulator expects " << L1TSC4NGJetID::N_candidate_features << " features per candidate and "
+            << L1TSC4NGJetID::N_jet_inputs << " jet inputs, got " << modelInputs.total_candidate_inputs << " and "
+            << modelInputs.total_jet_inputs;
+      for (int i = 0; i < L1TSC4NGJetID::N_candidate_inputs; ++i)
+        inputs_[i] = checkedValue(modelInputs.candidate_inputs[i], i);
+      for (int i = 0; i < L1TSC4NGJetID::N_jet_inputs; ++i)
+        inputs_[L1TSC4NGJetID::N_candidate_inputs + i] =
+            checkedValue(modelInputs.jet_inputs[i], L1TSC4NGJetID::N_candidate_inputs + i);
+    }
+
+    void predict() override { model_->evaluate(inputs_, outputs_, scratch_); }
+
+    void read_result(std::any result) override {
+      ModelOutputs* modelOutputs = std::any_cast<ModelOutputs*>(result);
+      for (int i = 0; i < L1TSC4NGJetID::N_regression_outputs; ++i)
+        modelOutputs->jet_regression_output[i] = outputs_[i];
+      for (int i = 0; i < L1TSC4NGJetID::N_class_outputs; ++i)
+        modelOutputs->jet_class_output[i] = outputs_[L1TSC4NGJetID::N_regression_outputs + i];
+    }
+
+  private:
+    // value as double, after checking that it is inside the domain where the ALIR model equals hls4ml
+    static double checkedValue(const inputtype& value, int index) {
+      const double asDouble = value.to_double();
+      if (inputtype(asDouble) != value || std::abs(asDouble) >= kInputLimit)
+        throw cms::Exception("L1TSC4NGJetID") << "alkaid emulator: input " << index << " = " << value.to_string(10)
+                                              << " is outside the model's exact domain (|x| < 2^29, at most 53 "
+                                                 "significant bits)";
+      return asDouble;
+    }
+
+    std::shared_ptr<const l1tpf::AlkaidModel> model_;
+    std::vector<double> inputs_;
+    std::vector<double> outputs_;
+    std::vector<int64_t> scratch_;
+  };
+
+}  // namespace
+
+std::shared_ptr<hls4mlEmulator::Model> L1TSC4NGJetID::makeAlkaidEmulator(
+    std::shared_ptr<const l1tpf::AlkaidModel> model) {
+  return std::make_shared<AlkaidEmulator>(std::move(model));
+}
 
 L1TSC4NGJetID::L1TSC4NGJetID(const std::shared_ptr<hls4mlEmulator::Model> model, int iNParticles, bool debug)
     : modelRef_(model) {

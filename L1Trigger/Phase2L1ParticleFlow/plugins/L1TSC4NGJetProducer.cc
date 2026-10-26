@@ -10,6 +10,7 @@
 #include "DataFormats/L1TParticleFlow/interface/PFJet.h"
 #include "DataFormats/JetReco/interface/Jet.h"
 #include "DataFormats/L1TParticleFlow/interface/PFCandidate.h"
+#include "L1Trigger/Phase2L1ParticleFlow/interface/EmulatorBackend.h"
 #include "L1Trigger/Phase2L1ParticleFlow/interface/L1TSC4NGJetID.h"
 #include "DataFormats/Common/interface/ValueMap.h"
 
@@ -19,12 +20,15 @@
 #include <cmath>
 #include <vector>
 
-class L1TSC4NGJetProducer : public edm::stream::EDProducer<> {
+class L1TSC4NGJetProducer : public edm::stream::EDProducer<edm::GlobalCache<l1tpf::SharedAlkaidModel>> {
 public:
-  explicit L1TSC4NGJetProducer(const edm::ParameterSet&);
+  L1TSC4NGJetProducer(const edm::ParameterSet&, const l1tpf::SharedAlkaidModel* alkaidModel);
   ~L1TSC4NGJetProducer() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+  // backend = "alkaid": the model, loaded once and shared by all streams; empty for "hls4ml"
+  static std::unique_ptr<l1tpf::SharedAlkaidModel> initializeGlobalCache(const edm::ParameterSet& cfg);
+  static void globalEndJob(const l1tpf::SharedAlkaidModel*) {}
 
 private:
   std::unique_ptr<L1TSC4NGJetID> fJetId_;
@@ -46,7 +50,11 @@ private:
   std::optional<l1tpf::corrector> corrector;
 };
 
-L1TSC4NGJetProducer::L1TSC4NGJetProducer(const edm::ParameterSet& cfg)
+std::unique_ptr<l1tpf::SharedAlkaidModel> L1TSC4NGJetProducer::initializeGlobalCache(const edm::ParameterSet& cfg) {
+  return l1tpf::loadSharedAlkaidModel(cfg, L1TSC4NGJetID::kAlkaidInputs, L1TSC4NGJetID::kAlkaidOutputs);
+}
+
+L1TSC4NGJetProducer::L1TSC4NGJetProducer(const edm::ParameterSet& cfg, const l1tpf::SharedAlkaidModel* alkaidModel)
     : jets_(consumes<edm::View<l1t::PFJet>>(cfg.getParameter<edm::InputTag>("jets"))),
       doJEC(cfg.getParameter<bool>("doJEC")),
       returnRawPt_(cfg.getParameter<bool>("returnRawPt")),
@@ -60,11 +68,16 @@ L1TSC4NGJetProducer::L1TSC4NGJetProducer(const edm::ParameterSet& cfg)
   for (unsigned i = 0; i < classes.size(); i++) {
     classes_.push_back(l1ct::JetTagClass(classes[i]));
   }
-  try {
-    model = loader.load_model();
-  } catch (std::runtime_error& e) {
-    throw cms::Exception("ModelError") << " ERROR: failed to load L1TSC4NGJet model version \"" << loader.model_name()
-                                       << "\". Model version not found in cms-hls4ml externals.";
+  // backend = "hls4ml": l1tSC4NGJetModelPath; "alkaid": alkaidModel (bit-identical scores)
+  if (alkaidModel->model) {
+    model = L1TSC4NGJetID::makeAlkaidEmulator(alkaidModel->model);
+  } else {
+    try {
+      model = loader.load_model();
+    } catch (std::runtime_error& e) {
+      throw cms::Exception("ModelError") << " ERROR: failed to load L1TSC4NGJet model version \"" << loader.model_name()
+                                         << "\". Model version not found in cms-hls4ml externals.";
+    }
   }
   fJetId_ = std::make_unique<L1TSC4NGJetID>(model, fNParticles_, isDebugEnabled);
   produces<l1t::PFJetCollection>("l1tSC4NGJets");
@@ -157,6 +170,8 @@ void L1TSC4NGJetProducer::fillDescriptions(edm::ConfigurationDescriptions& descr
   desc.add<std::string>("correctorFile", "");
   desc.add<std::string>("correctorDir", "");
   desc.add<std::string>("l1tSC4NGJetModelPath", std::string("L1TSC4NGJetModel_v2_0_0"));
+  l1tpf::addEmulatorBackendParameters(desc,
+                                      "L1Trigger/Phase2L1ParticleFlow/data/alkaid/L1TSC4NGJetModel_v2_0_0.json.gz");
   desc.add<int>("maxJets", 16);
   desc.add<int>("nParticles", 16);
   desc.add<double>("minPt", 10);

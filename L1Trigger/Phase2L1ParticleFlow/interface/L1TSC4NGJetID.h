@@ -44,6 +44,25 @@ namespace L1TSC4NGJet {
   }
 
 }  // namespace L1TSC4NGJet
+
+// Model I/O passed through hls4mlEmulator::Model (prepare_input(ModelInputs), read_result(ModelOutputs*)). The hls4ml
+// wrapper defines identical structs and any_casts by type name, so they must stay in the global namespace, unchanged.
+struct ModelInputs {
+  L1TSC4NGJet::inputtype* candidate_inputs;
+  L1TSC4NGJet::inputtype* jet_inputs;
+  int total_candidate_inputs;
+  int total_jet_inputs;
+};
+
+struct ModelOutputs {
+  L1TSC4NGJet::inputtype* jet_class_output;
+  L1TSC4NGJet::inputtype* jet_regression_output;
+};
+
+namespace l1tpf {
+  class AlkaidModel;
+}
+
 class L1TSC4NGJetID {
 public:
   L1TSC4NGJetID(const std::shared_ptr<hls4mlEmulator::Model> model, int iNParticles, bool debug);
@@ -54,6 +73,16 @@ public:
   static const int N_jet_inputs = 2;
   static const int N_class_outputs = 8;
   static const int N_regression_outputs = 1;
+  // Flat I/O of the alkaid (ALIR) version of the model, in the order of the hls4ml wrapper of
+  // L1TSC4NGJetModel_v2_0_0: [candidate inputs, jet inputs] and [regression score, kModelClassOutputs class scores].
+  // The model scores 9 classes; only the first N_class_outputs are used.
+  static const int kModelClassOutputs = 9;
+  static const int kAlkaidInputs = N_candidate_inputs + N_jet_inputs;
+  static const int kAlkaidOutputs = N_regression_outputs + kModelClassOutputs;
+
+  // An emulator with the same ModelInputs/ModelOutputs interface as the hls4ml one, backed by an alkaid model with
+  // kAlkaidInputs inputs and kAlkaidOutputs outputs.
+  static std::shared_ptr<hls4mlEmulator::Model> makeAlkaidEmulator(std::shared_ptr<const l1tpf::AlkaidModel> model);
 
   // Intermediate output type to allow full precision multiplication of jet pt by the ratio
   typedef ap_ufixed<22, 12, AP_TRN, AP_SAT> output_regression_type;
@@ -63,7 +92,7 @@ public:
 
   void setVectors();
   outputpairtype EvaluateNNFixed();
-  outputpairtype computeFixed(const l1t::PFJet &iJet);
+  outputpairtype computeFixed(const l1t::PFJet& iJet);
 
 private:
   std::vector<L1TSC4NGJet::inputtype> candidate_vector_;

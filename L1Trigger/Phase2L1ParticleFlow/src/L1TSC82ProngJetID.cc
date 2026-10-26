@@ -52,7 +52,7 @@ void L1TSC82ProngJetID::setNNVectorVar() {
 }
 
 std::vector<float> L1TSC82ProngJetID::EvaluateNNFixed() {
-  const unsigned int NInputs = 160;
+  const unsigned int NInputs = kNNInputs;
   const unsigned int FeaturesPerParticle = 20;
 
   if (fNParticles_ * FeaturesPerParticle != NInputs) {

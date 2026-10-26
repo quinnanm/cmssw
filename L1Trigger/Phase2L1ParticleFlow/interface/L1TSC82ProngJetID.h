@@ -13,8 +13,12 @@ class L1TSC82ProngJetID {
 public:
   L1TSC82ProngJetID(const std::shared_ptr<hls4mlEmulator::Model> model, int iNParticles);
 
+  // NN I/O. The types must equal the model's input_t/result_t: the hls4ml emulator any_casts to exactly these, and
+  // l1tpf::AlkaidEmulatorModel is instantiated with them.
   typedef ap_fixed<24, 12, AP_RND, AP_SAT, 0> inputtype;
   typedef ap_ufixed<20, 10, AP_RND, AP_SAT, 0> prong_score;
+  static constexpr unsigned int kNNInputs = 160;  // 8 particles x 20 features
+  static constexpr unsigned int kNNOutputs = 1;
 
   void setNNVectorVar();
   std::vector<float> EvaluateNNFixed();

@@ -22,6 +22,12 @@ struct BJetTFCache {
 
 class JetId {
 public:
+  // Fixed-point I/O of the TOoLLiP NN in EvaluateNNFixed. They must equal the model's input_t/result_t: the hls4ml
+  // emulator any_casts to exactly these types, and l1tpf::AlkaidEmulatorModel is instantiated with them.
+  using NNInputType = ap_fixed<12, 6, AP_TRN, AP_SAT, 0>;
+  using NNOutputType = ap_fixed<14, 8, AP_TRN, AP_SAT, 0>;
+  static constexpr unsigned int kNNInputs = 130;  // 10 particles x 13 features
+
   JetId(const std::string &iInput,
         const std::string &iOutput,
         const std::shared_ptr<hls4mlEmulator::Model> model,

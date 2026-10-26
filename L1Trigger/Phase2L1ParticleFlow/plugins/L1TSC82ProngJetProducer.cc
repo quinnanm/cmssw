@@ -9,6 +9,7 @@
 #include "DataFormats/L1TParticleFlow/interface/PFJet.h"
 #include "DataFormats/JetReco/interface/Jet.h"
 #include "DataFormats/L1TParticleFlow/interface/PFCandidate.h"
+#include "L1Trigger/Phase2L1ParticleFlow/interface/EmulatorBackend.h"
 #include "L1Trigger/Phase2L1ParticleFlow/interface/L1TSC82ProngJetID.h"
 #include "DataFormats/Common/interface/ValueMap.h"
 
@@ -21,12 +22,15 @@
 #include "ap_fixed.h"
 #include "hls4ml/emulator.h"
 
-class L1TSC82ProngJetProducer : public edm::stream::EDProducer<> {
+class L1TSC82ProngJetProducer : public edm::stream::EDProducer<edm::GlobalCache<l1tpf::SharedAlkaidModel>> {
 public:
-  explicit L1TSC82ProngJetProducer(const edm::ParameterSet&);
+  L1TSC82ProngJetProducer(const edm::ParameterSet&, const l1tpf::SharedAlkaidModel* alkaidModel);
   ~L1TSC82ProngJetProducer() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+  // backend = "alkaid": the model, loaded once and shared by all streams; empty for "hls4ml"
+  static std::unique_ptr<l1tpf::SharedAlkaidModel> initializeGlobalCache(const edm::ParameterSet& cfg);
+  static void globalEndJob(const l1tpf::SharedAlkaidModel*) {}
 
 private:
   std::unique_ptr<L1TSC82ProngJetID> fJetId_;
@@ -42,14 +46,20 @@ private:
   std::shared_ptr<hls4mlEmulator::Model> model;
 };
 
-L1TSC82ProngJetProducer::L1TSC82ProngJetProducer(const edm::ParameterSet& cfg)
+std::unique_ptr<l1tpf::SharedAlkaidModel> L1TSC82ProngJetProducer::initializeGlobalCache(const edm::ParameterSet& cfg) {
+  return l1tpf::loadSharedAlkaidModel(cfg, L1TSC82ProngJetID::kNNInputs, L1TSC82ProngJetID::kNNOutputs);
+}
+
+L1TSC82ProngJetProducer::L1TSC82ProngJetProducer(const edm::ParameterSet& cfg,
+                                                 const l1tpf::SharedAlkaidModel* alkaidModel)
     : jets_(consumes<edm::View<l1t::PFJet>>(cfg.getParameter<edm::InputTag>("jets"))),
       fMinPt_(cfg.getParameter<double>("minPt")),
       fMaxEta_(cfg.getParameter<double>("maxEta")),
       fMaxJets_(cfg.getParameter<int>("maxJets")),
       fNParticles_(cfg.getParameter<int>("nParticles")),
       loader(hls4mlEmulator::ModelLoader(cfg.getParameter<std::string>("l1tSC82ProngJetModelPath"))) {
-  model = loader.load_model();
+  // backend = "hls4ml": l1tSC82ProngJetModelPath; "alkaid": alkaidModel (bit-identical scores)
+  model = l1tpf::makeEmulatorModel<L1TSC82ProngJetID::inputtype, L1TSC82ProngJetID::prong_score>(*alkaidModel, loader);
   fJetId_ = std::make_unique<L1TSC82ProngJetID>(model, fNParticles_);
   produces<l1t::PFJetCollection>("l1tSC82ProngJets");
 }
@@ -97,6 +107,8 @@ void L1TSC82ProngJetProducer::fillDescriptions(edm::ConfigurationDescriptions& d
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("jets", edm::InputTag("l1tSC8PFL1PuppiEmulator"));
   desc.add<std::string>("l1tSC82ProngJetModelPath", std::string("L1TSC82ProngJetModel_v0"));
+  l1tpf::addEmulatorBackendParameters(desc,
+                                      "L1Trigger/Phase2L1ParticleFlow/data/alkaid/L1TSC82ProngJetModel_v0.json.gz");
   desc.add<double>("minPt", 0.);
   desc.add<double>("maxEta", 5.);
   desc.add<int>("maxJets", 16);

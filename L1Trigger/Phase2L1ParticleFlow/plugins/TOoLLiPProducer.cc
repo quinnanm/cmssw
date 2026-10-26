@@ -8,6 +8,7 @@
 #include "DataFormats/L1TParticleFlow/interface/PFJet.h"
 #include "DataFormats/JetReco/interface/Jet.h"
 #include "DataFormats/L1TParticleFlow/interface/PFCandidate.h"
+#include "L1Trigger/Phase2L1ParticleFlow/interface/EmulatorBackend.h"
 #include "L1Trigger/Phase2L1ParticleFlow/interface/JetId.h"
 #include "DataFormats/Common/interface/ValueMap.h"
 
@@ -22,12 +23,15 @@
 
 using namespace l1t;
 
-class TOoLLiPProducer : public edm::stream::EDProducer<> {
+class TOoLLiPProducer : public edm::stream::EDProducer<edm::GlobalCache<l1tpf::SharedAlkaidModel>> {
 public:
-  explicit TOoLLiPProducer(const edm::ParameterSet&);
+  TOoLLiPProducer(const edm::ParameterSet&, const l1tpf::SharedAlkaidModel* alkaidModel);
   ~TOoLLiPProducer() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+  // backend = "alkaid": the model, loaded once and shared by all streams; empty for "hls4ml"
+  static std::unique_ptr<l1tpf::SharedAlkaidModel> initializeGlobalCache(const edm::ParameterSet& cfg);
+  static void globalEndJob(const l1tpf::SharedAlkaidModel*) {}
 
 private:
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
@@ -45,7 +49,11 @@ private:
   std::unique_ptr<JetId> fJetId_;
 };
 
-TOoLLiPProducer::TOoLLiPProducer(const edm::ParameterSet& cfg)
+std::unique_ptr<l1tpf::SharedAlkaidModel> TOoLLiPProducer::initializeGlobalCache(const edm::ParameterSet& cfg) {
+  return l1tpf::loadSharedAlkaidModel(cfg, JetId::kNNInputs, 1);
+}
+
+TOoLLiPProducer::TOoLLiPProducer(const edm::ParameterSet& cfg, const l1tpf::SharedAlkaidModel* alkaidModel)
     : jets_(consumes<edm::View<l1t::PFJet>>(cfg.getParameter<edm::InputTag>("jets"))),
       fUseRawPt_(cfg.getParameter<bool>("useRawPt")),
       fMinPt_(cfg.getParameter<double>("minPt")),
@@ -54,7 +62,8 @@ TOoLLiPProducer::TOoLLiPProducer(const edm::ParameterSet& cfg)
       fNParticles_(cfg.getParameter<int>("nParticles")),
       fVtxEmu_(consumes<std::vector<l1t::VertexWord>>(cfg.getParameter<edm::InputTag>("vtx"))),
       loader(cfg.getParameter<std::string>("TOoLLiPVersion")),
-      model(loader.load_model()),
+      // backend = "hls4ml": TOoLLiPVersion; "alkaid": alkaidModel (bit-identical scores)
+      model(l1tpf::makeEmulatorModel<JetId::NNInputType, JetId::NNOutputType>(*alkaidModel, loader)),
       fJetId_(std::make_unique<JetId>(
           cfg.getParameter<std::string>("NNInput"), cfg.getParameter<std::string>("NNOutput"), model, fNParticles_)) {
   produces<edm::ValueMap<float>>("L1PFLLPJets");
@@ -98,6 +107,7 @@ void TOoLLiPProducer::fillDescriptions(edm::ConfigurationDescriptions& descripti
   desc.add<edm::InputTag>("jets", edm::InputTag("scPFL1Puppi"));
   desc.add<bool>("useRawPt", true);
   desc.add<std::string>("TOoLLiPVersion", std::string("TOoLLiP_v3"));
+  l1tpf::addEmulatorBackendParameters(desc, "L1Trigger/Phase2L1ParticleFlow/data/alkaid/TOoLLiP_v3_v3_1_0.json.gz");
 
   desc.add<std::string>("NNInput", "input:0");
   desc.add<std::string>("NNOutput", "sequential/dense_2/Sigmoid");
