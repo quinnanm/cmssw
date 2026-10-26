@@ -15,3 +15,25 @@
     <use name="L1Trigger/Phase2L1ParticleFlow"/>
 </bin>
 
+<bin name="testAlkaidVsHls4ml" file="testAlkaidVsHls4ml.cc,test_catch2_main.cc">
+    <use name="alkaid"/>
+    <use name="catch2"/>
+    <use name="hls"/>
+    <use name="hls4mlEmulatorExtras"/>
+    <use name="TOoLLiP"/>
+    <use name="L1TSC82ProngJetModel"/>
+    <use name="L1TSC4NGJetModel"/>
+    <use name="FWCore/ParameterSet"/>
+    <use name="FWCore/Utilities"/>
+    <use name="L1Trigger/Phase2L1ParticleFlow"/>
+</bin>
+
+<library name="testL1TriggerPhase2L1ParticleFlowAlkaidComparison" file="AlkaidComparisonAnalyzer.cc">
+    <use name="DataFormats/Common"/>
+    <use name="DataFormats/L1TParticleFlow"/>
+    <use name="FWCore/Framework"/>
+    <use name="FWCore/MessageLogger"/>
+    <use name="FWCore/ParameterSet"/>
+    <use name="FWCore/Utilities"/>
+    <flags EDM_PLUGIN="1"/>
+</library>
