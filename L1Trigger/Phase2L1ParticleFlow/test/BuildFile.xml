@@ -4,3 +4,10 @@
     <use name="NNPuppiTauModel"/>
     <use name="cppunit"/>
 </bin>
+
+<bin name="testAlkaidModels" file="testAlkaidModels.cc,test_catch2_main.cc">
+    <use name="catch2"/>
+    <use name="FWCore/ParameterSet"/>
+    <use name="L1Trigger/Phase2L1ParticleFlow"/>
+    <use name="PhysicsTools/Alkaid"/>
+</bin>

@@ -25,3 +25,7 @@ when they move there.
   first, far inside) and < 2²⁹ (L1TSC4NG v2_0_0: `L1TSC4NGJetID` checks every input and throws outside). Physical
   inputs are far below.
 
+`<model>.golden.bin`: reference vectors for `test/testAlkaidModels`. Inputs: 17 samples
+from each of six synthetic input sets (uniform wide, uniform narrow, input-type grid, saturation, rounding ties,
+zero-padded jets; 102 in total, seed 20261010). Outputs: the hls4ml C++ emulator's. Format: `"ALKGOLD1"`, uint64 n,
+n_inputs, n_outputs (little endian), then n·n_inputs input doubles and n·n_outputs output doubles, sample-major.
