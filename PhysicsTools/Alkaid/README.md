@@ -20,3 +20,6 @@ model.evaluate(inputs, outputs, scratch);
   fixed-point inputs of up to 53 significant bits.
 - Evaluating several samples per call (e.g. all jets of an event) is several times cheaper per sample than one
   call per sample.
+- `GoldenVectors.h` reads the reference vectors that ship with a model (`*.golden.bin`), for unit tests that check
+  a model in the release still reproduces its reference.
+- `test/testAlkaidModel` checks the external itself with two toy models (no physics model involved).

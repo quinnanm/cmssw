@@ -1,0 +1,6 @@
+<bin name="testAlkaidModel" file="testAlkaidModel.cc,test_catch2_main.cc">
+  <use name="catch2"/>
+  <use name="FWCore/ParameterSet"/>
+  <use name="FWCore/Utilities"/>
+  <use name="PhysicsTools/Alkaid"/>
+</bin>
