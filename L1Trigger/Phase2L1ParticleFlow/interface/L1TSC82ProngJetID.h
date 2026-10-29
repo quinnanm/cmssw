@@ -2,23 +2,29 @@
 #define L1TRIGGER_PHASE2L1PARTICLEFLOWS_L1TSC82ProngJetID_H
 
 #include "DataFormats/L1TParticleFlow/interface/PFJet.h"
+#include <array>
 #include <memory>
 #include <vector>
 
-//HLS4ML compiled emulator modeling
+// fixed-point NN emulation (alkaid)
 #include "ap_fixed.h"
-#include "hls4ml/emulator.h"
+#include "PhysicsTools/Alkaid/interface/Model.h"
 
 class L1TSC82ProngJetID {
 public:
-  L1TSC82ProngJetID(const std::shared_ptr<hls4mlEmulator::Model> model, int iNParticles);
+  // model: fixed-point model (alkaid) with kNNInputs inputs and kNNOutputs outputs; must outlive this object
+  L1TSC82ProngJetID(const cms::alkaid::Model& model, int iNParticles);
 
+  // NN I/O: the model's input_t/result_t. The inputs are quantized to inputtype before the model sees them, exactly
+  // as for the hls4ml emulator this replaces.
   typedef ap_fixed<24, 12, AP_RND, AP_SAT, 0> inputtype;
   typedef ap_ufixed<20, 10, AP_RND, AP_SAT, 0> prong_score;
+  static constexpr unsigned int kNNInputs = 160;  // 8 particles x 20 features
+  static constexpr unsigned int kNNOutputs = 1;
 
   void setNNVectorVar();
   std::vector<float> EvaluateNNFixed();
-  std::vector<float> computeFixed(const l1t::PFJet &iJet);
+  std::vector<float> computeFixed(const l1t::PFJet& iJet);
 
 private:
   std::vector<inputtype> NNvectorVar_;
@@ -38,7 +44,10 @@ private:
 
   std::unique_ptr<int[]> fCharge_;
   std::unique_ptr<int[]> fId_;
-  std::shared_ptr<hls4mlEmulator::Model> modelRef_;
+  const cms::alkaid::Model& nnModel_;
+  cms::alkaid::Model::Scratch nnScratch_;
+  std::array<double, kNNInputs> nnInput_{};
+  std::array<double, kNNOutputs> nnOutput_{};
 
   //bool isDebugEnabled_;
 };

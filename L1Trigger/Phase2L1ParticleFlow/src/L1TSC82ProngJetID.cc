@@ -3,8 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-L1TSC82ProngJetID::L1TSC82ProngJetID(const std::shared_ptr<hls4mlEmulator::Model> model, int iNParticles)
-    : modelRef_(model) {
+L1TSC82ProngJetID::L1TSC82ProngJetID(const cms::alkaid::Model& model, int iNParticles) : nnModel_(model) {
   NNvectorVar_.clear();
   fNParticles_ = iNParticles;
 
@@ -52,7 +51,7 @@ void L1TSC82ProngJetID::setNNVectorVar() {
 }
 
 std::vector<float> L1TSC82ProngJetID::EvaluateNNFixed() {
-  const unsigned int NInputs = 160;
+  const unsigned int NInputs = kNNInputs;
   const unsigned int FeaturesPerParticle = 20;
 
   if (fNParticles_ * FeaturesPerParticle != NInputs) {
@@ -62,19 +61,12 @@ std::vector<float> L1TSC82ProngJetID::EvaluateNNFixed() {
         std::to_string(fNParticles_));
   }
 
-  prong_score prong_scores;
-  inputtype fillzero = 0.0;
-
-  inputtype modelInput[NInputs];
-  std::fill(std::begin(modelInput), std::end(modelInput), fillzero);
-
+  // NNvectorVar_ already holds the inputs quantized to inputtype; inputtype -> double is exact.
   for (unsigned int i = 0; i < NInputs; i++) {
-    modelInput[i] = NNvectorVar_[i];
+    nnInput_[i] = NNvectorVar_[i].to_double();
   }
-
-  modelRef_->prepare_input(modelInput);
-  modelRef_->predict();
-  modelRef_->read_result(&prong_scores);
+  nnModel_.evaluate(nnInput_, nnOutput_, nnScratch_);
+  const prong_score prong_scores(nnOutput_[0]);  // exact: the model's output has this type
 
   std::vector<float> prong_score_;
   prong_score_.push_back(prong_scores.to_float());
@@ -82,7 +74,7 @@ std::vector<float> L1TSC82ProngJetID::EvaluateNNFixed() {
   return prong_score_;
 }  //end EvaluateNNFixed
 
-std::vector<float> L1TSC82ProngJetID::computeFixed(const l1t::PFJet &iJet) {
+std::vector<float> L1TSC82ProngJetID::computeFixed(const l1t::PFJet& iJet) {
   for (int i0 = 0; i0 < fNParticles_; i0++) {
     fPt_rel_.get()[i0] = 0;
     fPt_.get()[i0] = 0;
