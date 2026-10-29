@@ -8,9 +8,10 @@
 #include "DataFormats/L1TParticleFlow/interface/datatypes.h"
 #include "L1Trigger/Phase2L1ParticleFlow/interface/jetmet/L1SeedConePFJetEmulator.h"
 
-//HLS4ML compiled emulator modeling
+// fixed-point NN emulation (alkaid)
+#include <array>
 #include "ap_fixed.h"
-#include "hls4ml/emulator.h"
+#include "PhysicsTools/Alkaid/interface/Model.h"
 
 namespace L1TSC4NGJet {
 
@@ -46,14 +47,22 @@ namespace L1TSC4NGJet {
 }  // namespace L1TSC4NGJet
 class L1TSC4NGJetID {
 public:
-  L1TSC4NGJetID(const std::shared_ptr<hls4mlEmulator::Model> model, int iNParticles, bool debug);
+  // model: fixed-point model (alkaid) with kModelInputs inputs and kModelOutputs outputs; must outlive this object.
+  // iNParticles must not exceed N_candidates (fewer particles are zero-padded).
+  L1TSC4NGJetID(const cms::alkaid::Model& model, int iNParticles, bool debug);
 
-  static const int N_candidates = 16;
-  static const int N_candidate_features = 21;
-  static const int N_candidate_inputs = N_candidates * N_candidate_features;
-  static const int N_jet_inputs = 2;
-  static const int N_class_outputs = 8;
-  static const int N_regression_outputs = 1;
+  static constexpr int N_candidates = 16;
+  static constexpr int N_candidate_features = 21;
+  static constexpr int N_candidate_inputs = N_candidates * N_candidate_features;
+  static constexpr int N_jet_inputs = 2;
+  static constexpr int N_class_outputs = 8;
+  static constexpr int N_regression_outputs = 1;
+  // Flat model I/O (L1TSC4NGJetModel_v2_0_0): inputs [N_candidate_inputs candidate features, N_jet_inputs jet
+  // features], outputs [N_regression_outputs regression score, kModelClassOutputs class scores]. The model scores 9
+  // classes; only the first N_class_outputs are used.
+  static constexpr int kModelClassOutputs = 9;
+  static constexpr int kModelInputs = N_candidate_inputs + N_jet_inputs;
+  static constexpr int kModelOutputs = N_regression_outputs + kModelClassOutputs;
 
   // Intermediate output type to allow full precision multiplication of jet pt by the ratio
   typedef ap_ufixed<22, 12, AP_TRN, AP_SAT> output_regression_type;
@@ -63,7 +72,7 @@ public:
 
   void setVectors();
   outputpairtype EvaluateNNFixed();
-  outputpairtype computeFixed(const l1t::PFJet &iJet);
+  outputpairtype computeFixed(const l1t::PFJet& iJet);
 
 private:
   std::vector<L1TSC4NGJet::inputtype> candidate_vector_;
@@ -90,7 +99,10 @@ private:
   L1TSC4NGJet::inputtype fJetEta_;
   L1TSC4NGJet::inputtype fJetPtLog_;
 
-  std::shared_ptr<hls4mlEmulator::Model> modelRef_;
+  const cms::alkaid::Model& nnModel_;
+  cms::alkaid::Model::Scratch nnScratch_;
+  std::array<double, kModelInputs> nnInput_{};
+  std::array<double, kModelOutputs> nnOutput_{};
 
   bool isDebugEnabled_;
 };

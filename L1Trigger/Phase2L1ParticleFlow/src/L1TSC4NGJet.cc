@@ -1,24 +1,34 @@
 #include "L1Trigger/Phase2L1ParticleFlow/interface/L1TSC4NGJetID.h"
 #include "L1Trigger/Phase2L1ParticleFlow/interface/common/inversion.h"
 #include "L1Trigger/Phase2L1ParticleFlow/interface/common/log.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include <algorithm>
+#include <cmath>
 
 using namespace L1TSC4NGJet;
 
-struct ModelInputs {
-  inputtype* candidate_inputs;
-  inputtype* jet_inputs;
-  int total_candidate_inputs;
-  int total_jet_inputs;
-};
+namespace {
 
-struct ModelOutputs {
-  inputtype* jet_class_output;
-  inputtype* jet_regression_output;
-};
+  // The model reproduces the hls4ml emulator for inputs with |x| < 2^29: it models the emulator's
+  // ap_fixed<64,32,AP_RND,AP_SAT> input as ap_fixed<62,30,AP_RND,AP_WRAP> to fit 64-bit arithmetic. Inputs also pass
+  // through double, which is exact for at most 53 significant bits. Outside that domain the result could differ from
+  // the hls4ml emulator, so it throws instead (it never happened in 9,000 TTbar PU200 events).
+  double exactModelInput(const inputtype& value, int index) {
+    constexpr double kInputLimit = 536870912.;  // 2^29
+    const double asDouble = value.to_double();
+    if (inputtype(asDouble) != value || std::abs(asDouble) >= kInputLimit)
+      throw cms::Exception("L1TSC4NGJetID") << "NN input " << index << " = " << value.to_string(10)
+                                            << " is outside the model's exact domain (|x| < 2^29, at most 53 "
+                                               "significant bits)";
+    return asDouble;
+  }
 
-L1TSC4NGJetID::L1TSC4NGJetID(const std::shared_ptr<hls4mlEmulator::Model> model, int iNParticles, bool debug)
-    : modelRef_(model) {
+}  // namespace
+
+L1TSC4NGJetID::L1TSC4NGJetID(const cms::alkaid::Model& model, int iNParticles, bool debug) : nnModel_(model) {
+  if (iNParticles < 0 || iNParticles > N_candidates)
+    throw cms::Exception("Configuration")
+        << "L1TSC4NGJetID: nParticles = " << iNParticles << ", the NN takes at most " << N_candidates << " particles";
   candidate_vector_.clear();
   fNParticles_ = iNParticles;
   isDebugEnabled_ = debug;
@@ -153,49 +163,20 @@ void L1TSC4NGJetID::setVectors() {
 }
 
 L1TSC4NGJetID::outputpairtype L1TSC4NGJetID::EvaluateNNFixed() {
-  inputtype fillzero = 0.0;
-
-  // Define Candidate inputs and fill fully with 0s. Allows for case when N_candidate_inputs > candidate_vector_.size().
-  inputtype modelCandidateInput[N_candidate_inputs] = {};
-  std::fill(modelCandidateInput, modelCandidateInput + N_candidate_inputs, fillzero);
-
-  // Fill the candidate inputs from the pre calculated NNvectorVar
-  for (unsigned int i = 0; i < candidate_vector_.size(); i++) {
-    modelCandidateInput[i] = candidate_vector_[i];
+  // Flat model input: [N_candidate_inputs candidate features, N_jet_inputs jet features], zero-padded as before
+  // (allows N_candidate_inputs > candidate_vector_.size()).
+  nnInput_.fill(0.);
+  for (unsigned int i = 0; i < candidate_vector_.size() && i < N_candidate_inputs; i++) {
+    nnInput_[i] = exactModelInput(candidate_vector_[i], i);
+  }
+  for (unsigned int i = 0; i < jet_vector_.size() && i < N_jet_inputs; i++) {
+    nnInput_[N_candidate_inputs + i] = exactModelInput(jet_vector_[i], N_candidate_inputs + i);
   }
 
-  // Define Jet inputs and fill fully with 0s.
-  inputtype modelJetInput[N_jet_inputs] = {};
-  std::fill(modelJetInput, modelJetInput + N_jet_inputs, fillzero);
-  for (unsigned int i = 0; i < jet_vector_.size(); i++) {
-    modelJetInput[i] = jet_vector_[i];
-  }
-
-  // Define input struct
-  ModelInputs modelInputStruct;
-  // Load candidate and jet inputs
-  modelInputStruct.candidate_inputs = modelCandidateInput;
-  modelInputStruct.jet_inputs = modelJetInput;
-  modelInputStruct.total_candidate_inputs = N_candidate_features;
-  modelInputStruct.total_jet_inputs = N_jet_inputs;
-
-  // Define output struct
-  ModelOutputs modelOutputStruct;
-
-  // Define and load output with zeros ready for replacement from the model
-  inputtype modelClassOutput[N_class_outputs] = {};
-  inputtype modelRegressionOutput[N_regression_outputs] = {};
-  std::fill(modelClassOutput, modelClassOutput + N_class_outputs, fillzero);
-  std::fill(modelRegressionOutput, modelRegressionOutput + N_regression_outputs, fillzero);
-
-  // Load class and regression outputs
-  modelOutputStruct.jet_class_output = modelClassOutput;
-  modelOutputStruct.jet_regression_output = modelRegressionOutput;
-
-  // Run the inference
-  modelRef_->prepare_input(modelInputStruct);
-  modelRef_->predict();
-  modelRef_->read_result(&modelOutputStruct);
+  // Run the inference: nnOutput_ = [regression score, kModelClassOutputs class scores]
+  nnModel_.evaluate(nnInput_, nnOutput_, nnScratch_);
+  const double* regressionOutput = nnOutput_.data();
+  const double* classOutput = nnOutput_.data() + N_regression_outputs;
 
   outputpairtype modelResult_forOutput;
   if (isDebugEnabled_) {
@@ -203,21 +184,20 @@ L1TSC4NGJetID::outputpairtype L1TSC4NGJetID::EvaluateNNFixed() {
   }
   for (unsigned int i = 0; i < N_class_outputs; i++) {
     // Cast model output to jet tag score datatype
-    modelResult_forOutput.second[i] = l1ct::jet_tag_score_t(modelOutputStruct.jet_class_output[i]);
+    modelResult_forOutput.second[i] = l1ct::jet_tag_score_t(classOutput[i]);
     if (isDebugEnabled_) {
-      LogDebug("L1TSC4NGJetID") << l1ct::JetTagClassHandler::tagClassesDefault_[i] << " : "
-                                << modelOutputStruct.jet_class_output[i]
+      LogDebug("L1TSC4NGJetID") << l1ct::JetTagClassHandler::tagClassesDefault_[i] << " : " << classOutput[i]
                                 << " Cast to Jet Class type: " << modelResult_forOutput.second[i] << std::endl;
     }
   }
 
   for (unsigned int i = 0; i < N_regression_outputs; i++) {
     // Cast model output to transient regression score for jet pt multiplication
-    modelResult_forOutput.first[i] = modelOutputStruct.jet_regression_output[i];
+    modelResult_forOutput.first[i] = output_regression_type(regressionOutput[i]);
     if (isDebugEnabled_) {
       LogDebug("L1TSC4NGJetID") << "\n ===== Jet pT Correction Output ===== \n"
-                                << modelOutputStruct.jet_regression_output[i]
-                                << " Cast to Jet pT type: " << modelResult_forOutput.first[i] << std::endl;
+                                << regressionOutput[i] << " Cast to Jet pT type: " << modelResult_forOutput.first[i]
+                                << std::endl;
     }
   }
 

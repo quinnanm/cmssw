@@ -2,6 +2,7 @@
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/FileInPath.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -15,16 +16,20 @@
 
 #include "DataFormats/L1Trigger/interface/VertexWord.h"
 #include "L1Trigger/Phase2L1ParticleFlow/interface/corrector.h"
+#include "PhysicsTools/Alkaid/interface/Model.h"
 
 #include <cmath>
 #include <vector>
 
-class L1TSC4NGJetProducer : public edm::stream::EDProducer<> {
+// The NN model is loaded once per job and shared read-only by all streams (edm::GlobalCache).
+class L1TSC4NGJetProducer : public edm::stream::EDProducer<edm::GlobalCache<cms::alkaid::Model>> {
 public:
-  explicit L1TSC4NGJetProducer(const edm::ParameterSet&);
+  L1TSC4NGJetProducer(const edm::ParameterSet&, const cms::alkaid::Model* model);
   ~L1TSC4NGJetProducer() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+  static std::unique_ptr<cms::alkaid::Model> initializeGlobalCache(const edm::ParameterSet& cfg);
+  static void globalEndJob(const cms::alkaid::Model*) {}
 
 private:
   std::unique_ptr<L1TSC4NGJetID> fJetId_;
@@ -41,12 +46,15 @@ private:
 
   std::vector<l1ct::JetTagClass> classes_;
 
-  hls4mlEmulator::ModelLoader loader;
-  std::shared_ptr<hls4mlEmulator::Model> model;
   std::optional<l1tpf::corrector> corrector;
 };
 
-L1TSC4NGJetProducer::L1TSC4NGJetProducer(const edm::ParameterSet& cfg)
+std::unique_ptr<cms::alkaid::Model> L1TSC4NGJetProducer::initializeGlobalCache(const edm::ParameterSet& cfg) {
+  return std::make_unique<cms::alkaid::Model>(
+      cfg.getParameter<edm::FileInPath>("model").fullPath(), L1TSC4NGJetID::kModelInputs, L1TSC4NGJetID::kModelOutputs);
+}
+
+L1TSC4NGJetProducer::L1TSC4NGJetProducer(const edm::ParameterSet& cfg, const cms::alkaid::Model* model)
     : jets_(consumes<edm::View<l1t::PFJet>>(cfg.getParameter<edm::InputTag>("jets"))),
       doJEC(cfg.getParameter<bool>("doJEC")),
       returnRawPt_(cfg.getParameter<bool>("returnRawPt")),
@@ -54,19 +62,12 @@ L1TSC4NGJetProducer::L1TSC4NGJetProducer(const edm::ParameterSet& cfg)
       fMaxEta_(cfg.getParameter<double>("maxEta")),
       fMaxJets_(cfg.getParameter<int>("maxJets")),
       fNParticles_(cfg.getParameter<int>("nParticles")),
-      isDebugEnabled(edm::isDebugEnabled()),
-      loader(hls4mlEmulator::ModelLoader(cfg.getParameter<string>("l1tSC4NGJetModelPath"))) {
+      isDebugEnabled(edm::isDebugEnabled()) {
   std::vector<std::string> classes = cfg.getParameter<std::vector<std::string>>("classes");
   for (unsigned i = 0; i < classes.size(); i++) {
     classes_.push_back(l1ct::JetTagClass(classes[i]));
   }
-  try {
-    model = loader.load_model();
-  } catch (std::runtime_error& e) {
-    throw cms::Exception("ModelError") << " ERROR: failed to load L1TSC4NGJet model version \"" << loader.model_name()
-                                       << "\". Model version not found in cms-hls4ml externals.";
-  }
-  fJetId_ = std::make_unique<L1TSC4NGJetID>(model, fNParticles_, isDebugEnabled);
+  fJetId_ = std::make_unique<L1TSC4NGJetID>(*model, fNParticles_, isDebugEnabled);
   produces<l1t::PFJetCollection>("l1tSC4NGJets");
   if (doJEC) {
     corrector = l1tpf::corrector(cfg.getParameter<std::string>("correctorFile"),
@@ -156,7 +157,9 @@ void L1TSC4NGJetProducer::fillDescriptions(edm::ConfigurationDescriptions& descr
   desc.add<bool>("returnRawPt", false);
   desc.add<std::string>("correctorFile", "");
   desc.add<std::string>("correctorDir", "");
-  desc.add<std::string>("l1tSC4NGJetModelPath", std::string("L1TSC4NGJetModel_v2_0_0"));
+  desc.add<edm::FileInPath>(
+          "model", edm::FileInPath("L1Trigger/Phase2L1ParticleFlow/data/alkaid/L1TSC4NGJetModel_v2_0_0.json.gz"))
+      ->setComment("jet tagger + pT regression (alkaid ALIR file); L1TSC4NGJetModel_v2_0_0 from cms-hls4ml v2.1.0");
   desc.add<int>("maxJets", 16);
   desc.add<int>("nParticles", 16);
   desc.add<double>("minPt", 10);
