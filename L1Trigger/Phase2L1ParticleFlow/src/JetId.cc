@@ -1,12 +1,13 @@
 #include "L1Trigger/Phase2L1ParticleFlow/interface/JetId.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include <cmath>
 
-JetId::JetId(const std::string &iInput,
-             const std::string &iOutput,
-             const std::shared_ptr<hls4mlEmulator::Model> model,
-             int iNParticles)
-    : modelRef_(model) {
+JetId::JetId(const std::string &iInput, const std::string &iOutput, const cms::alkaid::Model &model, int iNParticles)
+    : nnModel_(&model) {
+  if (iNParticles < 0 || static_cast<unsigned int>(iNParticles) * kNNFeaturesPerParticle > kNNInputs)
+    throw cms::Exception("Configuration") << "JetId: nParticles = " << iNParticles << ", the NN takes at most "
+                                          << kNNInputs / kNNFeaturesPerParticle << " particles";
   NNvectorVar_.clear();
   fNParticles_ = iNParticles;
 
@@ -73,18 +74,15 @@ float JetId::EvaluateNN() {
   return outputs[0].matrix<float>()(0, 0);
 }  //end EvaluateNN
 
-ap_fixed<14, 8, AP_TRN, AP_SAT, 0> JetId::EvaluateNNFixed() {
-  ap_fixed<12, 6, AP_TRN, AP_SAT, 0> modelInput[130] = {};
-  for (unsigned int i = 0; i < NNvectorVar_.size(); i++) {
-    modelInput[i] = NNvectorVar_[i];
+JetId::NNOutputType JetId::EvaluateNNFixed() {
+  // Quantize the features to the model's input type (as for the hls4ml emulator), zero-padded to kNNInputs.
+  // NNInputType -> double is exact.
+  nnInput_.fill(0.);
+  for (unsigned int i = 0; i < NNvectorVar_.size() && i < kNNInputs; i++) {
+    nnInput_[i] = NNInputType(NNvectorVar_[i]).to_double();
   }
-  ap_fixed<14, 8, AP_TRN, AP_SAT, 0> modelResult[1] = {-1};
-
-  modelRef_->prepare_input(modelInput);
-  modelRef_->predict();
-  modelRef_->read_result(modelResult);
-  ap_fixed<14, 8, AP_TRN, AP_SAT, 0> modelResult_ = modelResult[0];
-  return modelResult_;
+  nnModel_->evaluate(nnInput_, nnOutput_, nnScratch_);
+  return NNOutputType(nnOutput_[0]);  // exact: the model's output has this type
 }  //end EvaluateNNFixed
 
 float JetId::compute(const l1t::PFJet &iJet, float vz, bool useRawPt) {
@@ -121,7 +119,7 @@ float JetId::compute(const l1t::PFJet &iJet, float vz, bool useRawPt) {
   return EvaluateNN();
 }
 
-ap_fixed<14, 8, AP_TRN, AP_SAT, 0> JetId::computeFixed(const l1t::PFJet &iJet, float vz, bool useRawPt) {
+JetId::NNOutputType JetId::computeFixed(const l1t::PFJet &iJet, float vz, bool useRawPt) {
   for (int i0 = 0; i0 < fNParticles_; i0++) {
     fPt_.get()[i0] = 0;
     fEta_.get()[i0] = 0;
