@@ -1,6 +1,7 @@
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
+#include "FWCore/ParameterSet/interface/FileInPath.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
@@ -19,14 +20,17 @@
 
 #include <string>
 #include "ap_fixed.h"
-#include "hls4ml/emulator.h"
+#include "PhysicsTools/Alkaid/interface/Model.h"
 
-class L1TSC82ProngJetProducer : public edm::stream::EDProducer<> {
+// The NN model is loaded once per job and shared read-only by all streams (edm::GlobalCache).
+class L1TSC82ProngJetProducer : public edm::stream::EDProducer<edm::GlobalCache<cms::alkaid::Model>> {
 public:
-  explicit L1TSC82ProngJetProducer(const edm::ParameterSet&);
+  L1TSC82ProngJetProducer(const edm::ParameterSet&, const cms::alkaid::Model* model);
   ~L1TSC82ProngJetProducer() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+  static std::unique_ptr<cms::alkaid::Model> initializeGlobalCache(const edm::ParameterSet& cfg);
+  static void globalEndJob(const cms::alkaid::Model*) {}
 
 private:
   std::unique_ptr<L1TSC82ProngJetID> fJetId_;
@@ -37,20 +41,21 @@ private:
   double const fMaxEta_;
   unsigned int const fMaxJets_;
   int const fNParticles_;
-
-  hls4mlEmulator::ModelLoader loader;
-  std::shared_ptr<hls4mlEmulator::Model> model;
 };
 
-L1TSC82ProngJetProducer::L1TSC82ProngJetProducer(const edm::ParameterSet& cfg)
+std::unique_ptr<cms::alkaid::Model> L1TSC82ProngJetProducer::initializeGlobalCache(const edm::ParameterSet& cfg) {
+  return std::make_unique<cms::alkaid::Model>(cfg.getParameter<edm::FileInPath>("model").fullPath(),
+                                              L1TSC82ProngJetID::kNNInputs,
+                                              L1TSC82ProngJetID::kNNOutputs);
+}
+
+L1TSC82ProngJetProducer::L1TSC82ProngJetProducer(const edm::ParameterSet& cfg, const cms::alkaid::Model* model)
     : jets_(consumes<edm::View<l1t::PFJet>>(cfg.getParameter<edm::InputTag>("jets"))),
       fMinPt_(cfg.getParameter<double>("minPt")),
       fMaxEta_(cfg.getParameter<double>("maxEta")),
       fMaxJets_(cfg.getParameter<int>("maxJets")),
-      fNParticles_(cfg.getParameter<int>("nParticles")),
-      loader(hls4mlEmulator::ModelLoader(cfg.getParameter<std::string>("l1tSC82ProngJetModelPath"))) {
-  model = loader.load_model();
-  fJetId_ = std::make_unique<L1TSC82ProngJetID>(model, fNParticles_);
+      fNParticles_(cfg.getParameter<int>("nParticles")) {
+  fJetId_ = std::make_unique<L1TSC82ProngJetID>(*model, fNParticles_);
   produces<l1t::PFJetCollection>("l1tSC82ProngJets");
 }
 
@@ -96,7 +101,9 @@ void L1TSC82ProngJetProducer::produce(edm::Event& iEvent, const edm::EventSetup&
 void L1TSC82ProngJetProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("jets", edm::InputTag("l1tSC8PFL1PuppiEmulator"));
-  desc.add<std::string>("l1tSC82ProngJetModelPath", std::string("L1TSC82ProngJetModel_v0"));
+  desc.add<edm::FileInPath>(
+          "model", edm::FileInPath("L1Trigger/Phase2L1ParticleFlow/data/alkaid/L1TSC82ProngJetModel_v0.json.gz"))
+      ->setComment("2-prong jet tagger (alkaid ALIR file); L1TSC82ProngJetModel_v0 from cms-hls4ml v0.0.1");
   desc.add<double>("minPt", 0.);
   desc.add<double>("maxEta", 5.);
   desc.add<int>("maxJets", 16);
