@@ -1,5 +1,4 @@
 <use name="L1METML"/>
-<use name="TOoLLiP"/>
 <use name="conifer"/>
 <use name="hls"/>
 <use name="hls4mLEmulatorExtras"/>
@@ -16,6 +15,7 @@
 <use name="FWCore/ParameterSet"/>
 <use name="FWCore/Utilities"/>
 <use name="L1Trigger/DemonstratorTools"/>
+<use name="PhysicsTools/Alkaid"/>
 <use name="PhysicsTools/TensorFlow"/>
 <flags ADD_SUBDIR="1"/>
 <export>
